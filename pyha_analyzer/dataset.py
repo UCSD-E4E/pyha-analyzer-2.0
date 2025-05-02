@@ -4,13 +4,15 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-class AudioDataset():
+class AudioDataset(): #Probably should inherit the hugging face datasets
     def __init__(self,
                  data_path: str,
                  train=False,
                  species=[],
                  dataset_name = ""):
         
+        # QUESTION: Will we load from a csv every time?
+        # Techically with a hugging face dataset we could load from other file types
         self.data_dir = Path(data_path)
         self.meta_dir = self.data_dir / "metadata.csv" # metadata csv file must be named metadata
         self.train = train
@@ -25,6 +27,10 @@ class AudioDataset():
         # Load in metadata and data
         self.meta = pd.read_csv(self.meta_dir)
         # self.verify_metadata()
+
+        ## For a frist draft, this might be alright. 
+        ## But we may want the ability to convert from a diffrent huggingface dataset to AudioDataset
+        ## Say Birdset Hugging face data objects
         self.data = load_dataset("audiofolder", data_dir=self.data_dir)
     
     def __len__(self):
