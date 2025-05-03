@@ -1,14 +1,14 @@
 from datasets import DatasetDict
 
 class AudioDataset(DatasetDict):
-    def __init__(self,ds:DatasetDict, provedence:str):
+    def __init__(self,ds:DatasetDict, provenance:str):
 
         #TODO Feature Checker
-        self.provedence = provedence
+        self.provenance = provenance
         super().__init__(ds)
 
-    def get_provedence(self) -> str:
-        return self.provedence
+    def get_provenance(self) -> str:
+        return self.provenance
     
 ## TODO: Features to add that maybe useful
 ##  Summary Statistics System
