@@ -1,5 +1,6 @@
 from transformers import Trainer
 import numpy as np
+from .dataset import AudioDataset
 
 """
 Intended to wrap around the normal hugging face trainer
@@ -12,8 +13,7 @@ class PyhaTrainer(Trainer):
     def __init__(self,
                  model, 
                  training_args, 
-                 dataset, 
-                 test_dataset=None,
+                 dataset: AudioDataset, 
                  data_collator=None, 
                  preprocessor=None):
         
