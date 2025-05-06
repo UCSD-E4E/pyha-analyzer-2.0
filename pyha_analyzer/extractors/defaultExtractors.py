@@ -1,27 +1,27 @@
 ## Trans Rights
 from abc import ABC, abstractmethod
-import typing
 from .. import AudioDataset
 from pathlib import Path
 
+
 class DefaultExtractor(ABC):
     @abstractmethod
-    def __init__(self, extractor_name:str):
+    def __init__(self, extractor_name: str):
         self.name = extractor_name
-        
-    @abstractmethod    
+
+    @abstractmethod
     def __call__(self) -> AudioDataset:
         pass
 
     def get_provenance(self) -> str:
         return f"Extractor: {self.name}"
-       
-class FolderExtractor(DefaultExtractor):
 
+
+class FolderExtractor(DefaultExtractor):
     @abstractmethod
     def __call__(self, data_dir, meta_dir) -> AudioDataset:
         pass
-    
+
     def verify_directories(self, data_dir, meta_path) -> bool:
         """Verify that the data directory and metadata file exist and are valid.
         Raises:

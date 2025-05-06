@@ -1,5 +1,4 @@
 from transformers import Trainer, TrainingArguments
-import numpy as np
 from .dataset import AudioDataset
 from .constants import DEFAULT_COLUMNS
 from .models.base_model import BaseModel
@@ -11,15 +10,20 @@ In case there are any project spefific configs we need to add here
 
 For example: We may want to log git hashes, so that can be included
 """
+
+
 class PyhaTrainer(Trainer):
-    def __init__(self,
-                 model: BaseModel, 
-                 dataset: AudioDataset,
-                 training_args = None,  
-                 data_collator=None, 
-                 preprocessor=None):
-        
-        assert issubclass(type(model), BaseModel), "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
+    def __init__(
+        self,
+        model: BaseModel,
+        dataset: AudioDataset,
+        training_args=None,
+        data_collator=None,
+        preprocessor=None,
+    ):
+        assert issubclass(type(model), BaseModel), (
+            "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
+        )
 
         self.dataset = dataset
 
@@ -35,7 +39,7 @@ class PyhaTrainer(Trainer):
             data_collator=data_collator,
             processing_class=preprocessor,
         )
-                         
+
     def evaluate(self, dataset=None):
         if dataset is None:
             dataset = self.dataset["test"]

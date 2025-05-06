@@ -1,9 +1,10 @@
-#https://huggingface.co/docs/transformers/en/custom_models
+# https://huggingface.co/docs/transformers/en/custom_models
 from transformers import PretrainedConfig, PreTrainedModel
 from timm.models.resnet import BasicBlock, Bottleneck, ResNet
 from torch import nn
 from typing import List
 from .base_model import BaseModel, has_required_inputs
+
 
 class ResnetConfig(PretrainedConfig):
     model_type = "resnet"
@@ -22,9 +23,13 @@ class ResnetConfig(PretrainedConfig):
         **kwargs,
     ):
         if block_type not in ["basic", "bottleneck"]:
-            raise ValueError(f"`block_type` must be 'basic' or bottleneck', got {block_type}.")
+            raise ValueError(
+                f"`block_type` must be 'basic' or bottleneck', got {block_type}."
+            )
         if stem_type not in ["", "deep", "deep-tiered"]:
-            raise ValueError(f"`stem_type` must be '', 'deep' or 'deep-tiered', got {stem_type}.")
+            raise ValueError(
+                f"`stem_type` must be '', 'deep' or 'deep-tiered', got {stem_type}."
+            )
 
         self.block_type = block_type
         self.layers = layers
@@ -37,7 +42,9 @@ class ResnetConfig(PretrainedConfig):
         self.avg_down = avg_down
         super().__init__(**kwargs)
 
+
 BLOCK_MAPPING = {"basic": BasicBlock, "bottleneck": Bottleneck}
+
 
 class ResnetModel(PreTrainedModel, BaseModel):
     config_class = ResnetConfig
@@ -60,12 +67,9 @@ class ResnetModel(PreTrainedModel, BaseModel):
 
         self.loss_func = nn.CrossEntropyLoss()
 
-    @has_required_inputs() 
-    #TODO Bug, when we are preprocessing live, we need to have audio defined here
+    @has_required_inputs()
+    # TODO Bug, when we are preprocessing live, we need to have audio defined here
     # A solution could be we change this to kwargs and use has_required_inputs..
     def forward(self, audio, audio_in, labels):
         out = self.model.forward(audio_in)
-        return {
-            "out": out,
-            "loss": self.loss_func(out, labels)
-        }
+        return {"out": out, "loss": self.loss_func(out, labels)}
