@@ -3,7 +3,7 @@ from transformers import PretrainedConfig, PreTrainedModel
 from timm.models.resnet import BasicBlock, Bottleneck, ResNet
 from torch import nn
 from typing import List
-from .base_model import has_required_inputs
+from .base_model import BaseModel, has_required_inputs
 
 class ResnetConfig(PretrainedConfig):
     model_type = "resnet"
@@ -39,11 +39,12 @@ class ResnetConfig(PretrainedConfig):
 
 BLOCK_MAPPING = {"basic": BasicBlock, "bottleneck": Bottleneck}
 
-class ResnetModel(PreTrainedModel):
+class ResnetModel(PreTrainedModel, BaseModel):
     config_class = ResnetConfig
 
     def __init__(self, config):
-        super().__init__(config)
+        PreTrainedModel.__init__(self, config)
+        BaseModel.__init__(self)
         block_layer = BLOCK_MAPPING[config.block_type]
         self.model = ResNet(
             block_layer,
@@ -59,7 +60,7 @@ class ResnetModel(PreTrainedModel):
 
         self.loss_func = nn.CrossEntropyLoss()
 
-    @has_required_inputs([]) 
+    @has_required_inputs() 
     #TODO Bug, when we are preprocessing live, we need to have audio defined here
     # A solution could be we change this to kwargs and use has_required_inputs..
     def forward(self, audio, audio_in, labels):
