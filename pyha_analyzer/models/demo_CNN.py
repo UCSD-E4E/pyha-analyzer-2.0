@@ -1,7 +1,9 @@
 #https://huggingface.co/docs/transformers/en/custom_models
 from transformers import PretrainedConfig, PreTrainedModel
 from timm.models.resnet import BasicBlock, Bottleneck, ResNet
+from torch import nn
 from typing import List
+from .base_model import has_required_inputs
 
 class ResnetConfig(PretrainedConfig):
     model_type = "resnet"
@@ -55,5 +57,14 @@ class ResnetModel(PreTrainedModel):
             avg_down=config.avg_down,
         )
 
-    def forward(self, tensor):
-        return self.model.forward_features(tensor)
+        self.loss_func = nn.CrossEntropyLoss()
+
+    @has_required_inputs([]) 
+    #TODO Bug, when we are preprocessing live, we need to have audio defined here
+    # A solution could be we change this to kwargs and use has_required_inputs..
+    def forward(self, audio, audio_in, labels):
+        out = self.model.forward(audio_in)
+        return {
+            "out": out,
+            "loss": self.loss_func(out, labels)
+        }
