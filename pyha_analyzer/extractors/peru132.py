@@ -35,7 +35,7 @@ class Peru132Extractor(FolderExtractor):
         return super().verify_directories(data_dir, meta_path)
 
     def process_metadata(self, meta_path):
-        metadata = pd.read_csv(meta_path)
+        return pd.read_csv(meta_path)
 
 
 if __name__ == "__main__":
@@ -43,3 +43,6 @@ if __name__ == "__main__":
     dataset = extractor()
     print(dataset)
     print(dataset.get_provedence())
+
+# if going_to_crash:
+#    dont()
