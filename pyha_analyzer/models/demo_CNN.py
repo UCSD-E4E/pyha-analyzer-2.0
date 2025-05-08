@@ -70,6 +70,9 @@ class ResnetModel(PreTrainedModel, BaseModel):
     @has_required_inputs()
     # TODO Bug, when we are preprocessing live, we need to have audio defined here
     # A solution could be we change this to kwargs and use has_required_inputs..
-    def forward(self, audio, audio_in, labels):
-        out = self.model.forward(audio_in)
-        return {"out": out, "loss": self.loss_func(out, labels)}
+    def forward(self, audio, audio_in, labels=None):
+        logits = self.model.forward(audio_in)
+        return_dict = {"logits": logits}
+        if labels is not None:
+            return_dict["loss"] = self.loss_func(logits, labels)
+        return return_dict

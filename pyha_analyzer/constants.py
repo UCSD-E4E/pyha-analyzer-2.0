@@ -3,3 +3,8 @@ DEFAULT_COLUMNS = [
     "audio_in",  # Considered to be model output
     "labels",  # Considered to be label for loss
 ]
+
+REQUIRED_MODEL_OUTPUTS = [
+    "logits",
+    "loss"
+]

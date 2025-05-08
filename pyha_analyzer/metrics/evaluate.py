@@ -9,6 +9,7 @@ Notes on Development:
 """
 
 from abc import ABC, abstractmethod
+import torch
 
 """
 Class to implement for Metrics, defines how metrics take in data and process it
@@ -37,7 +38,7 @@ class ComputeMetricsBase(ABC):
     Metrics: dict of metric names and function to slove it
     """
     def __init__(self, metrics:dict[str, Metric]):
-        self.metrics = metrics
+        self.metrics_to_run = metrics
 
     """
     Replaces compute_metrics in hugging face 
@@ -45,11 +46,14 @@ class ComputeMetricsBase(ABC):
     For each metric defined in this class, send the result
     """
     def __call__(self, eval_pred) -> dict[str, float]:
-        logits, target = eval_pred
+        logits = torch.Tensor(eval_pred.predictions)
+        # [-1] as eval_pred.label_ids are just the model inputs... 
+        #print(eval_pred.label_ids, type(eval_pred.label_ids), len(eval_pred.label_ids))
+        target = torch.Tensor(eval_pred.label_ids[-1]).to(torch.long)
 
         result = {}
-        for metric_name in self.metrics.keys():
-            result[metric_name] = self.metrics[metric_name](logits=logits, target=target)
+        for metric_name in self.metrics_to_run.keys():
+            result[metric_name] = self.metrics_to_run[metric_name](logits=logits, target=target)
 
         return result
     

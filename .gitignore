@@ -208,3 +208,4 @@ pip-selfcheck.json
 tmp_trainer/
 working_dir/
 data/
+wandb/

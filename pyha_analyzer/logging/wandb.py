@@ -1,6 +1,5 @@
 import os
 import wandb
-from transformers import TrainingArguments
 from .logging import Logger
 
 class WANDBLogging(Logger):
@@ -19,22 +18,7 @@ class WANDBLogging(Logger):
         os.environ["WANDB_LOG_MODEL"] = "false" 
         super().__init__()
 
-    def modify_trainer(self, trainer):
-        trainer.training_args
-
-    def modify_training_args(working_dir, training_args=None):
-        if training_args is None:
-            return TrainingArguments(
-                working_dir,
-                #report_to="wandb"
-            )
-    
-        else:
-            # training_args.report_to = "wandb" 
-            # according to documentation, default is "all", so it will send to wandb if it exists. 
-            return training_args
-
-    def __del__():    
+    def __del__(self):    
         wandb.finish()
 
     
