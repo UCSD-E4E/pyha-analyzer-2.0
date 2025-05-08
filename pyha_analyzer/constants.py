@@ -4,7 +4,4 @@ DEFAULT_COLUMNS = [
     "labels",  # Considered to be label for loss
 ]
 
-REQUIRED_MODEL_OUTPUTS = [
-    "logits",
-    "loss"
-]
+REQUIRED_MODEL_OUTPUTS = ["logits", "loss"]

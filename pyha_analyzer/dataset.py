@@ -1,6 +1,7 @@
 from datasets import DatasetDict, ClassLabel
 from .constants import DEFAULT_COLUMNS
 
+
 # TODO Add required splits
 class AudioDataset(DatasetDict):
     def __init__(self, ds: DatasetDict, provenance: str):
@@ -21,7 +22,7 @@ class AudioDataset(DatasetDict):
                 )
 
     def get_number_species(self):
-        return self["train"].features["labels"].num_classes 
+        return self["train"].features["labels"].num_classes
 
     def get_class_labels(self):
         """

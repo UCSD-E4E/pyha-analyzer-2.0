@@ -14,10 +14,13 @@ import torch
 """
 Class to implement for Metrics, defines how metrics take in data and process it
 """
+
+
 class Metric(ABC):
     """
     When implementing, perhaps you want to change the adveraging scheme or weight of classes, etc
     """
+
     def __init__(self):
         pass
 
@@ -28,6 +31,7 @@ class Metric(ABC):
 
     Labels are some target is some objective to compare against
     """
+
     @abstractmethod
     def __call__(self, logits=[], target=[]) -> float:
         pass
@@ -37,7 +41,8 @@ class ComputeMetricsBase(ABC):
     """
     Metrics: dict of metric names and function to slove it
     """
-    def __init__(self, metrics:dict[str, Metric]):
+
+    def __init__(self, metrics: dict[str, Metric]):
         self.metrics_to_run = metrics
 
     """
@@ -45,15 +50,17 @@ class ComputeMetricsBase(ABC):
 
     For each metric defined in this class, send the result
     """
+
     def __call__(self, eval_pred) -> dict[str, float]:
         logits = torch.Tensor(eval_pred.predictions)
-        # [-1] as eval_pred.label_ids are just the model inputs... 
-        #print(eval_pred.label_ids, type(eval_pred.label_ids), len(eval_pred.label_ids))
+        # [-1] as eval_pred.label_ids are just the model inputs...
+        # print(eval_pred.label_ids, type(eval_pred.label_ids), len(eval_pred.label_ids))
         target = torch.Tensor(eval_pred.label_ids[-1]).to(torch.long)
 
         result = {}
         for metric_name in self.metrics_to_run.keys():
-            result[metric_name] = self.metrics_to_run[metric_name](logits=logits, target=target)
+            result[metric_name] = self.metrics_to_run[metric_name](
+                logits=logits, target=target
+            )
 
         return result
-    

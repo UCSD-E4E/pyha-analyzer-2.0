@@ -11,6 +11,7 @@ Changes input to ensure function is passed the correct parameters
 Should only be used for forward method of all models in this repo ideally. 
 """
 
+
 # TODO rename this function, check_model_formatting()?
 def has_required_inputs():
     def decorator(forward):
@@ -22,8 +23,8 @@ def has_required_inputs():
                     raise NameError(
                         f"MISSING COLUMN IN DATASET! Please make sure `{system_expects}` is in the dataset"
                     )
-            
-            #checks for required output
+
+            # checks for required output
             model_output = forward(self, **kwargs)
             if type(model_output) != dict:
                 raise TypeError("Model output isn't a dict!")
@@ -34,17 +35,20 @@ def has_required_inputs():
                     raise NameError(
                         f"MISSING OUTPUT IN MODEL OUTPUT! Please make sure `{expected_output}` is in the dictionary for the forward function of the model"
                     )
-            
+
             return model_output
+
         return wrapper
 
     return decorator
+
 
 # TODO Create System to Require Spefific Output
 class BaseModel(ABC):
     """
     Regulator Class to ensure model is formated properly
     """
+
     def __init__(self, *args, **kwargs):
         assert hasattr(self.forward, "__wrapped__"), (
             "Please put `@has_required_inputs()` on the forward function of the model"
