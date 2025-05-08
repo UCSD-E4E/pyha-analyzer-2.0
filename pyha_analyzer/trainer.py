@@ -1,7 +1,10 @@
-from transformers import Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments, IntervalStrategy
+from .logging.wandb import WANDBLogging
 from .dataset import AudioDataset
 from .constants import DEFAULT_COLUMNS
 from .models.base_model import BaseModel
+from .metrics.evaluate import ComputeMetricsBase
+from .metrics.classification_metrics import AudioClassificationMetrics
 
 """
 Intended to wrap around the normal hugging face trainer
@@ -11,13 +14,33 @@ In case there are any project spefific configs we need to add here
 For example: We may want to log git hashes, so that can be included
 """
 
+class PyhaTrainingArguments(TrainingArguments):
+    """
+    Subclassing training arugments because there are some arugments that 
+    probably should remaintain consistent during training
+
+    Note there are many TrainingArugments, please refer back to hugging face documentation for all settings
+    """
+    def __init__(self, working_dir):
+        super().__init__(working_dir)
+        self.label_names = DEFAULT_COLUMNS
+        self.logging_strategy=IntervalStrategy.STEPS
+        self.logging_steps = 10
+        self.eval_strategy=IntervalStrategy.STEPS
+        self.eval_steps = 30
+
+        self.per_device_train_batch_size = 64
+        self.per_device_train_batch_size = 64
+        self.dataloader_num_workers = 4
+
 
 class PyhaTrainer(Trainer):
     def __init__(
         self,
         model: BaseModel,
-        dataset: AudioDataset,
-        training_args=None,
+        dataset: AudioDataset, 
+        metrics: ComputeMetricsBase = None,
+        training_args: PyhaTrainingArguments = None,
         data_collator=None,
         preprocessor=None,
     ):
@@ -25,11 +48,24 @@ class PyhaTrainer(Trainer):
             "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
         )
 
+        self.wandb_logger = WANDBLogging("pa2.0_test")
         self.dataset = dataset
 
+        ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
+        # if metrics is not None:
+        #     self.compute_metrics = metrics
+        # else:
+
+        #Will create default metrics such as cMAP and AUROC
+        num_classes = self.dataset.get_number_species()
+        
+        compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
+
+        ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
         if training_args is None:
-            training_args = TrainingArguments("working_dir")
-        training_args.label_names = DEFAULT_COLUMNS
+            training_args = PyhaTrainingArguments("working_dir")
+
+        self.training_args = training_args
 
         super().__init__(
             model,
@@ -38,10 +74,19 @@ class PyhaTrainer(Trainer):
             eval_dataset=dataset["valid"],
             data_collator=data_collator,
             processing_class=preprocessor,
+            compute_metrics=compute_metrics 
         )
 
-    def evaluate(self, dataset=None):
-        if dataset is None:
-            dataset = self.dataset["test"]
 
-        super().evaluate(dataset)
+    def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="valid"):
+        #print(eval_dataset)
+        if eval_dataset is None:
+            eval_dataset = self.dataset["valid"]
+            metric_key_prefix = "valid"
+
+        if ignore_keys is None:
+            #is this the best place for this?
+            # there maybe a training_arg that defines this by default. Should be changed there...
+            ignore_keys = ["audio", "audio-in"] 
+        
+        super().evaluate(eval_dataset=eval_dataset.select(range(0, 128)), ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix)
