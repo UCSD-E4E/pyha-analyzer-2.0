@@ -14,14 +14,14 @@ class AudiomentationBasePreprocessor(PreProcessorBase):
         result = self.augmentation(batch)
         return result
 
-class AudiomentationComposePreprocessor(PreProcessorBase):
+class AudiomentationCompositePreprocessor(PreProcessorBase):
     """
     Composite augmentation preprocessor class, wraps audiomentations.Compose
     """
 
     def __init__(self, 
-                 augmentation_kwargs: list[dict], 
-                 augmentations: list[BaseWaveformTransform],
+                #  augmentation_kwargs: list[dict], # Necessary to have list of kwargs for each augmentation? 
+                 augmentations: list[BaseWaveformTransform], # pre-defined, pre-initiaed augmentations
                  p: float = 1.0,
                  shuffle: bool = False):
         self.p = p
@@ -47,4 +47,23 @@ class MixUpPreprocessor(AudiomentationBasePreprocessor):
         self.augmentation_kwargs = augmentation_kwargs
         super().__init__(name="MixUp", 
                          augmentation=AddBackgroundNoise(**self.augmentation_kwargs))
-    
+
+def compose_preprocessors(preprocessors: list[AudiomentationBasePreprocessor],
+                          p: float = 1.0,
+                          shuffle: bool = False):
+    """
+    Compose a list of augmentation preprocessors into a single composite preprocessor.
+    Args:
+        preprocessors (list): List of preprocessors to compose
+        p (float): Probability of applying the composite augmentation
+        shuffle (bool): Whether to shuffle the order of augmentations with every application
+    """
+    augmentations_list = []
+    for preprocessor in preprocessors:
+        augmentations_list.append(preprocessor.augmentation)
+    result = AudiomentationCompositePreprocessor(
+        augmentations=augmentations_list,
+        p=p,
+        shuffle=shuffle
+    )   
+    return result
