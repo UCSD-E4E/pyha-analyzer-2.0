@@ -26,9 +26,7 @@ class Metric(ABC):
 
     """
     Get the result of the metric
-
     Logits are raw outputs from model
-
     Labels are some target is some objective to compare against
     """
 

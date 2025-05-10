@@ -15,13 +15,13 @@ class cMAP(Metric):
     Returns tuple of (class-wise mAP, sample-wise mAP)
     """
 
-    def __init__(self, num_classes, mutlilabel=True, top_n=-1, samplewise=False):
+    def __init__(self, num_classes, multilabel=True, top_n=-1, samplewise=False):
         """
         top_n looks at performance from the top_n number of species
         agg diffrent aggerations of the metric across classes
         """
 
-        if mutlilabel:
+        if multilabel:
             self.metric = MultilabelAveragePrecision(
                 num_labels=num_classes, average="none"
             )

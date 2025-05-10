@@ -6,7 +6,8 @@ from pathlib import Path
 
 class DefaultExtractor(ABC):
     @abstractmethod
-    def __init__(self, extractor_name: str):
+    def __init__(self, 
+                 extractor_name: str):
         self.name = extractor_name
 
     @abstractmethod

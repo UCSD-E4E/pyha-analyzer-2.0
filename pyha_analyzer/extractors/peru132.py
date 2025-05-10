@@ -42,7 +42,7 @@ if __name__ == "__main__":
     extractor = Peru132Extractor("data/Peru132")
     dataset = extractor()
     print(dataset)
-    print(dataset.get_provedence())
+    print(dataset.get_provenance())
 
 # if going_to_crash:
 #    dont()
