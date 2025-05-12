@@ -91,7 +91,7 @@ class PyhaTrainer(Trainer):
             ignore_keys = ["audio", "audio-in"]
 
         super().evaluate(
-            eval_dataset=eval_dataset.select(range(0, 128)),
+            eval_dataset=eval_dataset.select(range(0, 128)), #Probably needs to be changed to the full dataset...
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )

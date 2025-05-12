@@ -7,9 +7,10 @@ from .preprocessors import PreProcessorBase
 
 class MelSpectrogramPreprocessors(PreProcessorBase):
     def __init__(
-        self, duration=5
+        self, duration=5, augment=None
     ):  # TODO Suppose we pass data augmentations through here?
         self.duration = duration
+        self.augment = augment
         super().__init__()
 
     def __call__(self, batch):
@@ -22,6 +23,9 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
                 start = np.random.randint(0, y.shape[-1] - (sr * self.duration))
             else:
                 y = np.pad(y, (sr * self.duration) - y.shape[-1])
+
+            if self.augment != None:
+               y = self.augment(y)
 
             pillow_transforms = transforms.ToPILImage()
             new_audio.append(
