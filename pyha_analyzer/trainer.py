@@ -29,7 +29,7 @@ class PyhaTrainingArguments(TrainingArguments):
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
         self.eval_strategy = IntervalStrategy.STEPS
-        self.eval_steps = 30
+        self.eval_steps = 100
 
         self.per_device_train_batch_size = 64
         self.per_device_train_batch_size = 64
@@ -91,7 +91,7 @@ class PyhaTrainer(Trainer):
             ignore_keys = ["audio", "audio-in"]
 
         super().evaluate(
-            eval_dataset=eval_dataset.select(range(0, 128)), #Probably needs to be changed to the full dataset...
+            eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )

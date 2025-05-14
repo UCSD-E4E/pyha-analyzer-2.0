@@ -15,13 +15,13 @@ class cMAP(Metric):
     Returns tuple of (class-wise mAP, sample-wise mAP)
     """
 
-    def __init__(self, num_classes, multilabel=True, top_n=-1, samplewise=False):
+    def __init__(self, num_classes, mutlilabel=True, top_n=-1, samplewise=False):
         """
         top_n looks at performance from the top_n number of species
         agg diffrent aggerations of the metric across classes
         """
 
-        if multilabel:
+        if mutlilabel:
             self.metric = MultilabelAveragePrecision(
                 num_labels=num_classes, average="none"
             )
@@ -50,7 +50,7 @@ class ROCAUC(Metric):
         if mutlilabel:
             self.metric = MultilabelAUROC(num_labels=num_classes, average="none")
         else:
-            self.metric = MulticlassAUROC(num_classes=num_classes, average="macro")
+            self.metric = MulticlassAUROC(num_classes=num_classes, average="none")
 
         self.num_classes = num_classes
 
@@ -74,10 +74,10 @@ class AudioClassificationMetrics(ComputeMetricsBase):
 
         self.metrics = {
             "cMAP": cMAP(
-                num_classes, mutlilabel=False
+                num_classes, mutlilabel=mutlilabel
             ),  # TODO handle mutlilabel better
             # "cMAP-5": cMAP(num_classes, mutlilabel=mutlilabel, top_n=5),
-            "ROCAUC": ROCAUC(num_classes, mutlilabel=False),
+            "ROCAUC": ROCAUC(num_classes, mutlilabel=mutlilabel),
         }
 
         super().__init__(self.metrics)

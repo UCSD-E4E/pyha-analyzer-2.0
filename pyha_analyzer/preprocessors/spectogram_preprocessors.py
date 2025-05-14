@@ -4,14 +4,21 @@ import torchvision.transforms as transforms
 
 from .preprocessors import PreProcessorBase
 
+def one_hot_encode(labels, classes):
+    one_hot = np.zeros((len(labels), len(classes)))
+    for i in range(len(labels)):
+        for label in labels[i]:
+            one_hot[i, label] = 1
+    return one_hot
 
 class MelSpectrogramPreprocessors(PreProcessorBase):
     def __init__(
-        self, duration=5, augment=None
+        self, duration=5, augment=None, class_list=[]
     ):  # TODO Suppose we pass data augmentations through here?
         self.duration = duration
         self.augment = augment
-        super().__init__()
+        self.class_list = class_list
+        super().__init__(name="MelSpectrogramPreprocessor")
 
     def __call__(self, batch):
         new_audio = []
@@ -25,7 +32,7 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
                 y = np.pad(y, (sr * self.duration) - y.shape[-1])
 
             if self.augment != None:
-               y = self.augment(y)
+               y = self.augment(y, sr)
 
             pillow_transforms = transforms.ToPILImage()
             new_audio.append(
@@ -41,4 +48,8 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
             )
         batch["audio_in"] = new_audio
         batch["audio"] = new_audio
+        batch["labels"] = one_hot_encode(batch["labels"], self.class_list)
+
+        # Handle mutlilabel formatting
+
         return batch

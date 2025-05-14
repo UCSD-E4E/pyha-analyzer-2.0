@@ -1,29 +1,28 @@
-from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments, extractors, preprocessors
+from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments, extractors
 from pyha_analyzer.models.demo_CNN import ResnetConfig, ResnetModel
-from audiomentations import Compose, AddColorNoise
+from pyha_analyzer.preprocessors import MelSpectrogramPreprocessors
 
-# Dataset
+
 birdset_extactor = extractors.Birdset()
 hsn_ads = birdset_extactor("HSN")
+hsn_ads
 
-# Preprocessor (TODO HAVE CHECK FOR TRAINING TO DISABLE SOME AUGMENTATIONS)
-augment = Compose([
-    AddColorNoise(min_snr_db=1, max_snr_db=5, min_f_decay=-3.01, max_f_decay=-3.0, p=1),
-])
-preprocessor = preprocessors.MelSpectrogramPreprocessors(duration=5)
-hsn_ads.set_transform(preprocessor)
+preprocessor = MelSpectrogramPreprocessors(duration=5, class_list=hsn_ads["train"].features["labels"].feature.names)
 
-# Model
+hsn_ads["train"].set_transform(preprocessor)
+hsn_ads["valid"].set_transform(preprocessor)
+hsn_ads["test"].set_transform(preprocessor)
+
 resnet50d_config = ResnetConfig(
     num_classes=len(hsn_ads["train"].features["ebird_code"].names), input_channels=1
 )
 model = ResnetModel(resnet50d_config)
 
-# Train
 args = PyhaTrainingArguments(
     working_dir="working_dir"
 )
-args.num_train_epochs = 10
+args.num_train_epochs = 5
+args.eval_steps = 20
 
 trainer = PyhaTrainer(
     model=model,
@@ -31,3 +30,5 @@ trainer = PyhaTrainer(
     training_args=args
 )
 trainer.train()
+trainer.evaluate(eval_dataset=hsn_ads["test"], metric_key_prefix="Soundscape")
+

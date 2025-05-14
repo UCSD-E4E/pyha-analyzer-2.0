@@ -65,7 +65,7 @@ class ResnetModel(PreTrainedModel, BaseModel):
             avg_down=config.avg_down,
         )
 
-        self.loss_func = nn.CrossEntropyLoss()
+        self.loss_func = nn.BCEWithLogitsLoss()
 
     @has_required_inputs()
     # TODO Bug, when we are preprocessing live, we need to have audio defined here
