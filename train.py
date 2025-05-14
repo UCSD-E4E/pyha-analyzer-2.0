@@ -1,6 +1,7 @@
 from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments, extractors
 from pyha_analyzer.models.demo_CNN import ResnetConfig, ResnetModel
 from pyha_analyzer.preprocessors import MelSpectrogramPreprocessors
+from pyha_analyzer.models import EfficentNet
 
 
 birdset_extactor = extractors.Birdset()
@@ -16,13 +17,14 @@ hsn_ads["test"].set_transform(preprocessor)
 resnet50d_config = ResnetConfig(
     num_classes=len(hsn_ads["train"].features["ebird_code"].names), input_channels=1
 )
-model = ResnetModel(resnet50d_config)
+
+model = EfficentNet(num_classes=len(hsn_ads["train"].features["ebird_code"].names))
 
 args = PyhaTrainingArguments(
     working_dir="working_dir"
 )
-args.num_train_epochs = 5
-args.eval_steps = 20
+args.num_train_epochs = 30
+args.eval_steps = 30
 
 trainer = PyhaTrainer(
     model=model,
