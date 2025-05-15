@@ -32,8 +32,15 @@ class PyhaTrainingArguments(TrainingArguments):
         self.eval_steps = 100
 
         self.per_device_train_batch_size = 64
-        self.per_device_train_batch_size = 64
+        self.per_device_eval_batch_size = 32
         self.dataloader_num_workers = 4
+
+        # In inferance, model saves all predictions on GPU by default
+        # So in soundscape evals, this can be expensive
+        # This setting has it give predictions back to CPU every X steps
+        # should make things cheaper
+        # https://discuss.huggingface.co/t/cuda-out-of-memory-during-evaluation-but-training-is-fine/1783/12
+        self.eval_accumulation_steps = 1000
 
 
 class PyhaTrainer(Trainer):
