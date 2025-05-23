@@ -40,7 +40,7 @@ class PyhaTrainingArguments(TrainingArguments):
         # This setting has it give predictions back to CPU every X steps
         # should make things cheaper
         # https://discuss.huggingface.co/t/cuda-out-of-memory-during-evaluation-but-training-is-fine/1783/12
-        self.eval_accumulation_steps = 1000
+        self.eval_accumulation_steps = 100
 
 
 class PyhaTrainer(Trainer):

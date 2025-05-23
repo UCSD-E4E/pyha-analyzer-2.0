@@ -1,6 +1,6 @@
 from abc import ABC
 from functools import wraps
-from ..constants import DEFAULT_COLUMNS, REQUIRED_MODEL_OUTPUTS
+from ..constants import MODEL_COLUMNS, REQUIRED_MODEL_OUTPUTS
 
 """
 Should be applied on all forward functions,
@@ -18,7 +18,7 @@ def has_required_inputs():
         @wraps(forward)
         def wrapper(self, **kwargs):
             # Checks for required inputs
-            for system_expects in DEFAULT_COLUMNS:
+            for system_expects in MODEL_COLUMNS:
                 if system_expects not in kwargs:
                     raise NameError(
                         f"MISSING COLUMN IN DATASET! Please make sure `{system_expects}` is in the dataset"

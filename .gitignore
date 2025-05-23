@@ -209,3 +209,5 @@ tmp_trainer/
 working_dir/
 data/
 wandb/
+data_birdset/
+experiment_*.py

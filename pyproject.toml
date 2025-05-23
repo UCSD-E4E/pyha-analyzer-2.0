@@ -12,6 +12,7 @@ dependencies = [
     "librosa>=0.10.2.post1",
     "pandas>=2.2.3",
     "pillow>=11.2.1",
+    "pyrootutils>=1.0.4",
     "soundfile>=0.13.1",
     "timm>=1.0.15",
     "torchmetrics>=1.7.1",
