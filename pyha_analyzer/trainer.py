@@ -1,7 +1,7 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
 from .logging.wandb import WANDBLogging
 from .dataset import AudioDataset
-from .constants import DEFAULT_COLUMNS
+from .constants import DEFAULT_COLUMNS, DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
 from .models.base_model import BaseModel
 from .metrics.evaluate import ComputeMetricsBase
 from .metrics.classification_metrics import AudioClassificationMetrics
@@ -14,17 +14,22 @@ In case there are any project spefific configs we need to add here
 For example: We may want to log git hashes, so that can be included
 """
 
-
 class PyhaTrainingArguments(TrainingArguments):
     """
     Subclassing training arugments because there are some arugments that
     probably should remaintain consistent during training
 
-    Note there are many TrainingArugments, please refer back to hugging face documentation for all settings
+    Note there are many TrainingArguments, please refer back to hugging face documentation for all settings
     """
 
-    def __init__(self, working_dir):
+    def __init__(self, 
+                 working_dir: str,
+                 run_name: str=DEFAULT_RUN_NAME,
+                 project_name: str=DEFAULT_PROJECT_NAME):
         super().__init__(working_dir)
+        
+        self.run_name = run_name
+        self.project_name = project_name
         self.label_names = DEFAULT_COLUMNS
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
@@ -54,10 +59,14 @@ class PyhaTrainer(Trainer):
         preprocessor=None,
     ):
         assert issubclass(type(model), BaseModel), (
-            "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
+            "PyhaTrainer only works with BaseModel. Please have model inherit from BaseModel"
         )
+        
+        ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
+        self.training_args = (training_args if training_args 
+                              else PyhaTrainingArguments("working_dir"))
 
-        self.wandb_logger = WANDBLogging("pa2.0_test")
+        self.wandb_logger = WANDBLogging(self.training_args.project_name)
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
@@ -69,12 +78,6 @@ class PyhaTrainer(Trainer):
         num_classes = self.dataset.get_number_species()
 
         compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
-
-        ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
-        if training_args is None:
-            training_args = PyhaTrainingArguments("working_dir")
-
-        self.training_args = training_args
 
         super().__init__(
             model,

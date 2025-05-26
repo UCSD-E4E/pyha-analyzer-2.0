@@ -21,7 +21,9 @@ resnet50d_config = ResnetConfig(
 model = EfficentNet(num_classes=len(hsn_ads["train"].features["ebird_code"].names))
 
 args = PyhaTrainingArguments(
-    working_dir="working_dir"
+    working_dir="working_dir",
+    run_name="logging_test",
+    project_name="pyha_analyzer_2.0",
 )
 args.num_train_epochs = 30
 args.eval_steps = 30

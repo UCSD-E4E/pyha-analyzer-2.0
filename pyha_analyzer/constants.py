@@ -12,3 +12,6 @@ MODEL_COLUMNS = [
 ]
 
 REQUIRED_MODEL_OUTPUTS = ["logits", "loss"]
+
+DEFAULT_PROJECT_NAME = "pa2.0_test" # TODO: change?
+DEFAULT_RUN_NAME = "working_dir" # TODO: change? 
