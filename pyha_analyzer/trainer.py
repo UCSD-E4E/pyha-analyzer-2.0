@@ -1,7 +1,7 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
 from .logging.wandb import WANDBLogging
 from .dataset import AudioDataset
-from .constants import DEFAULT_COLUMNS
+from .constants import MODEL_COLUMNS
 from .models.base_model import BaseModel
 from .metrics.evaluate import ComputeMetricsBase
 from .metrics.classification_metrics import AudioClassificationMetrics
@@ -25,7 +25,7 @@ class PyhaTrainingArguments(TrainingArguments):
 
     def __init__(self, working_dir):
         super().__init__(working_dir)
-        self.label_names = DEFAULT_COLUMNS
+        self.label_names = MODEL_COLUMNS
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
         self.eval_strategy = IntervalStrategy.STEPS
@@ -40,7 +40,7 @@ class PyhaTrainingArguments(TrainingArguments):
         # This setting has it give predictions back to CPU every X steps
         # should make things cheaper
         # https://discuss.huggingface.co/t/cuda-out-of-memory-during-evaluation-but-training-is-fine/1783/12
-        self.eval_accumulation_steps = 100
+        self.eval_accumulation_steps = 10
 
 
 class PyhaTrainer(Trainer):
@@ -97,8 +97,11 @@ class PyhaTrainer(Trainer):
             # there maybe a training_arg that defines this by default. Should be changed there...
             ignore_keys = ["audio", "audio-in"]
 
-        super().evaluate(
+        
+        results = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )
+        return results
+

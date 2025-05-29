@@ -11,6 +11,22 @@ def one_hot_encode(labels, classes):
             one_hot[i, label] = 1
     return one_hot
 
+def find_start_of_segmentat(start, end, meta_duration=8, duration=5):
+    event_duration = end - start
+    if event_duration < meta_duration:
+        pad_s = (meta_duration - duration) / 2
+        end = end + pad_s
+        start = start - pad_s
+        if start < 0:
+            start = 0
+            end = meta_duration
+
+    actual_start = np.random.uniform(start, end-duration)
+    if actual_start < 0:
+        actual_start = 0
+    # print(actual_start)
+    return actual_start
+
 class MelSpectrogramPreprocessors(PreProcessorBase):
     def __init__(
         self,
@@ -43,13 +59,24 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
             label = batch["labels"][item_idx]
             y, sr = librosa.load(path=batch["audio"][item_idx]["path"])
             
-            # Select a random 5 second window if not given a 5 second window
-            # Padd if less than 5 seconds
+            # If the system has detected events,
+            # Randomly choose one
+            # create a 8 second window around it and randomly sample 5 seconds from it
+            events = batch["detected_events"][item_idx]
+            
+            #TODO THIS SHOULD BE OFFLINE
             start = 0
-            if y.shape[-1] > (sr * self.duration):
-                start = np.random.randint(0, y.shape[-1] - (sr * self.duration))
-            else:
-                y = np.pad(y, (sr * self.duration) - y.shape[-1])
+            if events is not None and len(events) > 0: 
+                # print(len(events), events)
+                event = events[np.random.choice(range(len(events)), 1)[0]]
+                start = find_start_of_segmentat(event[0], event[1], meta_duration=self.duration + 3, duration=self.duration)
+
+            # print(start)
+
+            # Handle out of bound issues
+            end_sr = int(start * sr) + int(sr * self.duration)
+            if y.shape[-1] <= end_sr:
+                y = np.pad(y, end_sr - y.shape[-1])
 
             # Audio Based Augmentations
             if self.augment != None:
@@ -61,7 +88,7 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
             mels = np.array(
                 pillow_transforms(
                     librosa.feature.melspectrogram(
-                        y=y[start : start + (sr * self.duration)], sr=sr,
+                        y=y[int(start * sr) : end_sr], sr=sr,
                         n_fft=self.n_fft, 
                         hop_length=self.hop_length, 
                         power=self.power, 
@@ -73,10 +100,13 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
             if self.spectrogram_augments is not None:
                 mels = self.spectrogram_augments(mels)
 
+            # print(mels.shape, int(start * sr), y.shape)
             new_audio.append(mels)
             new_labels.append(label)
     
         batch["audio_in"] = new_audio
         batch["audio"] = new_audio
         batch["labels"] = np.array(new_labels, dtype=np.float32)
+        batch["detected_events"] = np.array(new_labels, dtype=np.float32) #why is this replacing labels?
+        # print(np.array(new_audio).shape, np.array(new_labels, dtype=np.float32).shape)
         return batch
