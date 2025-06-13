@@ -17,7 +17,6 @@ dependencies = [
     "timm>=1.0.15",
     "torchmetrics>=1.7.1",
     "transformers[torch]>=4.51.3",
-    "wandb>=0.19.10",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +31,10 @@ cu128 = [
 cu126 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+]
+
+wandb = [
+  "wandb>=0.19.10",
 ]
 
 [tool.uv]
