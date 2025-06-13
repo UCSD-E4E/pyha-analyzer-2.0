@@ -50,7 +50,7 @@ class PyhaTrainer(Trainer):
         dataset: AudioDataset,
         metrics: ComputeMetricsBase = None,
         training_args: PyhaTrainingArguments = None,
-        logger: Logger = WANDBLogging("pa2.0_test"),
+        logger: Logger = None,
         data_collator=None,
         preprocessor=None,
     ):
