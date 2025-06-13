@@ -1,11 +1,13 @@
 import os
-import wandb
 from .logging import Logger
 
 
 class WANDBLogging(Logger):
     def __init__(self, project_name):
-        wandb.login()
+        import wandb
+        self.wandb = wandb
+        self.wandb.login()
+        
         self.project_name = project_name
 
         os.environ["WANDB_PROJECT"] = project_name
@@ -20,4 +22,4 @@ class WANDBLogging(Logger):
         super().__init__()
 
     def __del__(self):
-        wandb.finish()
+        self.wandb.finish()
