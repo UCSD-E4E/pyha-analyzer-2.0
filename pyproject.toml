@@ -3,7 +3,7 @@ name = "pyha-analyzer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "audiomentations>=0.40.0",
     "datasets>=3.5.1",
