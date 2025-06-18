@@ -1,5 +1,5 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
-from .logging.wandb import WANDBLogging
+from .logging.wandb import WANDBLogging, Logger
 from .dataset import AudioDataset
 from .constants import DEFAULT_COLUMNS
 from .models.base_model import BaseModel
@@ -50,6 +50,7 @@ class PyhaTrainer(Trainer):
         dataset: AudioDataset,
         metrics: ComputeMetricsBase = None,
         training_args: PyhaTrainingArguments = None,
+        logger: Logger = None,
         data_collator=None,
         preprocessor=None,
     ):
@@ -57,7 +58,7 @@ class PyhaTrainer(Trainer):
             "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
         )
 
-        self.wandb_logger = WANDBLogging("pa2.0_test")
+        self.logger = logger
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
@@ -97,8 +98,9 @@ class PyhaTrainer(Trainer):
             # there maybe a training_arg that defines this by default. Should be changed there...
             ignore_keys = ["audio", "audio-in"]
 
-        super().evaluate(
+        results = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )
+        return results
