@@ -98,8 +98,9 @@ class PyhaTrainer(Trainer):
             # there maybe a training_arg that defines this by default. Should be changed there...
             ignore_keys = ["audio", "audio-in"]
 
-        super().evaluate(
+        results = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )
+        return results
