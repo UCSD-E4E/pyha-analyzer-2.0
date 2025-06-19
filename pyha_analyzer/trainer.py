@@ -53,6 +53,7 @@ class PyhaTrainer(Trainer):
         logger: Logger = None,
         data_collator=None,
         preprocessor=None,
+        ignore_keys=["audio", "audio-in"]
     ):
         assert issubclass(type(model), BaseModel), (
             "PyhaTrainer Only Work with BaseModel. Please have model inherit from BaseModel"
@@ -77,6 +78,8 @@ class PyhaTrainer(Trainer):
 
         self.training_args = training_args
 
+        self.ignore_keys = ignore_keys
+
         super().__init__(
             model,
             training_args,
@@ -96,7 +99,7 @@ class PyhaTrainer(Trainer):
         if ignore_keys is None:
             # is this the best place for this?
             # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = ["audio", "audio-in"]
+            ignore_keys = self.ignore_keys
 
         results = super().evaluate(
             eval_dataset=eval_dataset,
