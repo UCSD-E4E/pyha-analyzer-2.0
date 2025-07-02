@@ -76,14 +76,15 @@ class PyhaTrainer(Trainer):
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
-        # if metrics is not None:
-        #     self.compute_metrics = metrics
-        # else:
+        if metrics is not None and isinstance(metrics, ComputeMetricsBase):
+            self.compute_metrics = metrics
+        else:
+            compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
 
         # Will create default metrics such as cMAP and AUROC
         num_classes = self.dataset.get_number_species()
 
-        compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
+        
 
         ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
         if training_args is None:
