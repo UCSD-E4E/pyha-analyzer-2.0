@@ -53,7 +53,7 @@ class ComputeMetricsBase(ABC):
         logits = torch.Tensor(eval_pred.predictions)
         # [-1] as eval_pred.label_ids are just the model inputs...
         # print(eval_pred.label_ids, type(eval_pred.label_ids), len(eval_pred.label_ids))
-        target = torch.Tensor(eval_pred.label_ids[-1]).to(torch.long)
+        target = torch.Tensor(eval_pred.label_ids).to(torch.long)
 
         result = {}
         for metric_name in self.metrics_to_run.keys():

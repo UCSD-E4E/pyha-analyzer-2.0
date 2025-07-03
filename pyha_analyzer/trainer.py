@@ -1,5 +1,5 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
-from .logging.wandb import WANDBLogging
+from .logging.wandb import WANDBLogging, Logger
 from .dataset import AudioDataset
 from .constants import DEFAULT_COLUMNS, DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
 from .models.base_model import BaseModel
@@ -55,8 +55,10 @@ class PyhaTrainer(Trainer):
         dataset: AudioDataset,
         metrics: ComputeMetricsBase = None,
         training_args: PyhaTrainingArguments = None,
+        logger: Logger = None,
         data_collator=None,
         preprocessor=None,
+        ignore_keys=["audio", "audio-in"]
     ):
         assert issubclass(type(model), BaseModel), (
             "PyhaTrainer only works with BaseModel. Please have model inherit from BaseModel"
@@ -66,18 +68,32 @@ class PyhaTrainer(Trainer):
         self.training_args = (training_args if training_args 
                               else PyhaTrainingArguments("working_dir"))
 
-        self.wandb_logger = WANDBLogging(self.training_args.project_name)
+
+        self.logger = logger
+
+        # self.wandb_logger = WANDBLogging(self.training_args.project_name)
+
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
-        # if metrics is not None:
-        #     self.compute_metrics = metrics
-        # else:
+        if metrics is not None and isinstance(metrics, ComputeMetricsBase):
+            self.compute_metrics = metrics
+        else:
+            compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
 
         # Will create default metrics such as cMAP and AUROC
         num_classes = self.dataset.get_number_species()
 
-        compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
+        
+
+        ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
+        if training_args is None:
+            training_args = PyhaTrainingArguments("working_dir")
+
+        self.training_args = training_args
+
+        self.ignore_keys = ignore_keys
+
 
         super().__init__(
             model,
@@ -98,10 +114,11 @@ class PyhaTrainer(Trainer):
         if ignore_keys is None:
             # is this the best place for this?
             # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = ["audio", "audio-in"]
+            ignore_keys = self.ignore_keys
 
-        super().evaluate(
+        results = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )
+        return results
