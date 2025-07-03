@@ -95,10 +95,11 @@ class PyhaTrainer(Trainer):
         if ignore_keys is None:
             # is this the best place for this?
             # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = ["audio", "audio-in"]
+            ignore_keys = ["audio", "audio-in", "labels", "logits", "loss"],
 
-        super().evaluate(
+        result = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
             metric_key_prefix=metric_key_prefix,
         )
+        return result
