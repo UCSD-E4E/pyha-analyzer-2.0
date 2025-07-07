@@ -52,7 +52,6 @@ class ComputeMetricsBase(ABC):
     def __call__(self, eval_pred) -> dict[str, float]:
         logits = torch.Tensor(eval_pred.predictions)
         # [-1] as eval_pred.label_ids are just the model inputs...
-        # print(eval_pred.label_ids, type(eval_pred.label_ids), len(eval_pred.label_ids))
         target = torch.Tensor(eval_pred.label_ids[-1]).to(torch.long)
 
         result = {}

@@ -1,7 +1,8 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
 from .logging.wandb import WANDBLogging
 from .dataset import AudioDataset
-from .constants import DEFAULT_COLUMNS
+#from .constants import DEFAULT_COLUMNS
+from .constants import MODEL_COLUMNS
 from .models.base_model import BaseModel
 from .metrics.evaluate import ComputeMetricsBase
 from .metrics.classification_metrics import AudioClassificationMetrics
@@ -25,7 +26,8 @@ class PyhaTrainingArguments(TrainingArguments):
 
     def __init__(self, working_dir):
         super().__init__(working_dir)
-        self.label_names = DEFAULT_COLUMNS
+        #self.label_names = DEFAULT_COLUMNS
+        self.label_names = MODEL_COLUMNS
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
         self.eval_strategy = IntervalStrategy.STEPS
@@ -67,8 +69,12 @@ class PyhaTrainer(Trainer):
 
         # Will create default metrics such as cMAP and AUROC
         num_classes = self.dataset.get_number_species()
+        #print("num_classes is ", num_classes)
 
+        #TODO potentially change back to what is commented
         compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
+        # metrics = AudioClassificationMetrics([], num_classes=num_classes)
+        # print("metrics for cMAP and ROCAUC from PyhaTrainer are ", metrics.metrics["cMAP"].metric)
 
         ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
         if training_args is None:
@@ -83,7 +89,7 @@ class PyhaTrainer(Trainer):
             eval_dataset=dataset["valid"],
             data_collator=data_collator,
             processing_class=preprocessor,
-            compute_metrics=compute_metrics,
+            compute_metrics=compute_metrics
         )
 
     def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="valid"):
@@ -95,11 +101,13 @@ class PyhaTrainer(Trainer):
         if ignore_keys is None:
             # is this the best place for this?
             # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = ["audio", "audio-in", "labels", "logits", "loss"],
-
+            ignore_keys = ["audio", "audio-in"]
+            #ignore_keys=[]
+        
         result = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
+            #ignore_keys=[],
             metric_key_prefix=metric_key_prefix,
         )
         return result

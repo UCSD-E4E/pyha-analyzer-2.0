@@ -42,16 +42,16 @@ class CoralReef(DefaultExtractor):
             for month in os.scandir(state.path):
                 label= int(state.name == "Degraded_Reef") # 1 for Degraded_Reef, 0 for Non_Degraded_Reef
             
-                count=0
+                # count=0
                 for wav in os.scandir(month.path):
                     if (wav.name.endswith(".TXT")):
                         continue
                     curr_data = extract_features(wav, label) 
                     all_data.append(curr_data)
                     #comment out the next 3 lines to get all the data
-                    count+=1
-                    if (count> 50):
-                        break
+                    # count+=1
+                    # if (count> 50):
+                    #     break
         
         ds = Dataset.from_list(all_data)
         class_list = ["Degraded_Reef" , "Non_Degraded_Reef"]
@@ -61,7 +61,6 @@ class CoralReef(DefaultExtractor):
         
         mutlilabel_class_label = Sequence(ClassLabel(names=class_list))
 
-        #TODO : Check if this is getting casted correctly aka make sure [0,1] is Non_Degraded_Reef and [1,0] is Degraded_Reef
         split_ds["train"]= split_ds["train"].cast_column("labels", mutlilabel_class_label)
         valid_test["train"] = valid_test["train"].cast_column("labels", mutlilabel_class_label)
         valid_test["test"]= valid_test["test"].cast_column("labels", mutlilabel_class_label)

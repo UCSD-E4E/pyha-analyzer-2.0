@@ -6,9 +6,12 @@ from torchmetrics.classification import (
     MultilabelAUROC,
 )
 from .evaluate import Metric, ComputeMetricsBase
+from transformers import EvalPrediction
+from typing import Dict
 
 
 # TODO: should the metric define the name being used?
+# cmap is not even getting called because the line in hte init is not even getting printed!!!
 class cMAP(Metric):
     """
     Mean average precision metric for a batch of outputs and labels
@@ -20,7 +23,6 @@ class cMAP(Metric):
         top_n looks at performance from the top_n number of species
         agg diffrent aggerations of the metric across classes
         """
-
         if mutlilabel:
             self.metric = MultilabelAveragePrecision(
                 num_labels=num_classes, average="none"
@@ -31,7 +33,7 @@ class cMAP(Metric):
             )
 
         self.num_classes = num_classes
-
+        
     def __call__(self, logits=[], target=[]) -> float:
         map_by_class = self.metric(logits, target)
         cmap = map_by_class.nanmean()

@@ -31,6 +31,6 @@ trainer = PyhaTrainer(
     dataset=hsn_ads,
     training_args=args
 )
-trainer.train()
+#trainer.train()
 trainer.evaluate(eval_dataset=hsn_ads["test"], metric_key_prefix="Soundscape")
 
