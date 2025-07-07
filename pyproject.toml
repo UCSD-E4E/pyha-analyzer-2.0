@@ -1,6 +1,6 @@
 [project]
 name = "pyha-analyzer"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -35,6 +35,7 @@ cu126 = [
 ]
 
 [tool.uv]
+package = true
 conflicts = [
   [
     { extra = "cpu" },
@@ -69,3 +70,4 @@ explicit = true
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
+
