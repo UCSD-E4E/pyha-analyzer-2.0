@@ -5,6 +5,7 @@ import os
 from datasets import Dataset
 import datasets
 import pandas as pd
+import wave
 
 
 def parse_config(config_path):
@@ -23,9 +24,12 @@ def extract_features(wav, label, site):
         oneHotEncodedLabel = [0,1] #Non_Degraded_Reef
     else:
         oneHotEncodedLabel = [1,0] #Degraded_Reef
-
+        
+    with wave.open(wav.path, "rb") as wave_file:
+        sample_rate = wave_file.getframerate()
+        
     return {
-        "sample_rate": 48000,
+        "sample_rate": sample_rate,
         "labels": oneHotEncodedLabel,
         "filepath": str(wav.path),
         "audio": str(wav.path),
