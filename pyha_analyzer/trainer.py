@@ -30,6 +30,8 @@ class PyhaTrainingArguments(TrainingArguments):
         super().__init__(working_dir)
         #self.label_names = DEFAULT_COLUMNS
         self.label_names = MODEL_COLUMNS
+        self.run_name = run_name
+        self.project_name = project_name
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
         self.eval_strategy = IntervalStrategy.STEPS
