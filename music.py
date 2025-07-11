@@ -10,6 +10,7 @@ if __name__ == "__main__":
     #order: 
     #   1. parse the csv of liked & generate a hashmap where key is the filename & value is the entire dicitonary that would be the entry to lancedb
     #   2. go through ALL wav files in directory & see if its filename matches the filename of the key in the hashmp from step 1. if so, then, insert it as a new column in the value dictionary.
+    #        -> save path to all wav files in array
     #   3. once you have gone through ALL wav files in the direcotry & if any do not have a filepath associated with them, then remove them from the hashmap entirely
 
     # === Step 1: Parse the CSV & build the hashmap ===
@@ -38,10 +39,9 @@ if __name__ == "__main__":
         for name in filenames:
             if name.endswith(".wav"):
                 full_path = os.path.join(dirpath, name)
-                all_audio_files.append(str(full_path))
 
                 if name in filename_to_metadata:
-                    # Case 1: metadata already exists — just add path
+                    # Case 1: metadata already exists for liked sounds — just add path
                     filename_to_metadata[name]["FilePath"] = full_path
                     matched_filenames.add(name)
                 elif "Liked Sounds" in os.path.normpath(dirpath).split(os.sep):
@@ -53,9 +53,13 @@ if __name__ == "__main__":
                     filename_to_metadata[name] = new_entry
                     #ensures this 
                     matched_filenames.add(name)
+                else:
+                    #not a liked song at all. then, store its path so that you can generate and insert embeddings into lancedb. 
+                    # use the other audio paths in the frame to generate embeddings for queries
+                    all_audio_files.append(str(full_path))
 
     # === Step 3: Remove unmatched entries ===
-    # This will only keep entries that were matched with a .wav file
+    # This will only keep entries that were matched with a .wav file, basically deleted any "liked files" whose audio does not actually exist
     filename_to_metadata = {
         fname: metadata
         for fname, metadata in filename_to_metadata.items()
@@ -95,7 +99,7 @@ if __name__ == "__main__":
     ])
     table = db.create_table("music_embeddings", schema=schema)
 
-    # Generate vector embeddings of liked sounds using perch embeddings and insert into lancedb
+    # Generate vector embeddings of all audios using perch embeddings and insert into lancedb
 
 
 
@@ -103,5 +107,5 @@ if __name__ == "__main__":
 
 #TODO!!
 # generate vector embeddings of liked sounds using perch embeddings
-# insert vector embeddings of liked sounds into lancedb
-# do similarity searches of location A sounds in lancedb (using perch embeddings)
+# insert vector embeddings of all sounds into lancedb
+# do similarity searches of liked sounds in lancedb (using perch embeddings)
