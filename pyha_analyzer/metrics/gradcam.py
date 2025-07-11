@@ -43,9 +43,7 @@ class GradCAM:
         cam = cam.squeeze().cpu().numpy() # need to do #cpu() to prevent memory error issues
         cam = cv2.resize(cam, (224, 224))
         cam = (cam - cam.min()) / (cam.max() - cam.min())  # Normalize because spectogram will be normalized
-
         # self.plot_gradcam_histogram(cam)
-
         return cam
 
 
@@ -92,11 +90,11 @@ class GradCAM:
         plt.subplots_adjust(top=0.85)
 
         # Save to PDF or show
-        fig.savefig(p, format='pdf')
+        #fig.savefig(p, format='pdf')
         # plt.show()
         plt.close(fig)
 
-
+    #plot histogram for one individual gradcam 
     def plot_gradcam_histogram(self, gradcam, title="Grad-CAM Histogram"):
         plt.figure(figsize=(6, 4))
         plt.hist(gradcam.flatten(), bins=50, range=(0, 1), color="blue", alpha=0.7)
