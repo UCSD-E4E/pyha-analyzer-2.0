@@ -41,8 +41,9 @@ class CoralReef(DefaultExtractor):
         for state in os.scandir(audio_path):
             for month in os.scandir(state.path):
                 label= int(state.name == "Degraded_Reef") # 1 for Degraded_Reef, 0 for Non_Degraded_Reef
-            
+
                 # count=0
+                count=0
                 for wav in os.scandir(month.path):
                     if (wav.name.endswith(".TXT")):
                         continue
@@ -52,7 +53,10 @@ class CoralReef(DefaultExtractor):
                     # count+=1
                     # if (count> 50):
                     #     break
-        
+                    count+=1
+                    if (count> 200):
+                        break
+
         ds = Dataset.from_list(all_data)
         class_list = ["Degraded_Reef" , "Non_Degraded_Reef"]
         
