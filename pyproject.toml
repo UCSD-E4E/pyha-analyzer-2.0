@@ -12,6 +12,7 @@ dependencies = [
     "librosa>=0.10.2.post1",
     "pandas>=2.2.3",
     "pillow>=11.2.1",
+    "pydantic>=2.11.4",
     "pyrootutils>=1.0.4",
     "soundfile>=0.13.1",
     "timm>=1.0.15",
@@ -70,4 +71,9 @@ explicit = true
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]
 
