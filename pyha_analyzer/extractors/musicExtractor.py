@@ -17,16 +17,16 @@ def get_wav_sampling_rate(file_path):
 
 def extract_features(wav, label):
     #labels are {'Data', 'LA_Sand_Forrest_ULTRASONIC_03-05-25', 'A Zoom F3_03-05-25', 'Location A Sand Forrest'}
-    if label=='Data':
-        oneHotEncodedLabel = [1,0,0,0]
-    elif label =='LA_Sand_Forrest_ULTRASONIC_03-05-25':
-        oneHotEncodedLabel = [0,1,0,0]
-    elif label =='A Zoom F3_03-05-25':
-        oneHotEncodedLabel = [0,0,1,0]
-    elif label =='Location A Sand Forrest':
-        oneHotEncodedLabel = [0,0,0,1]
-    else: #invalid label so return nothing
-        return
+    if label==0:
+        oneHotEncodedLabel = [1,0]
+    # elif label =='LA_Sand_Forrest_ULTRASONIC_03-05-25':
+    #     oneHotEncodedLabel = [0,1,0,0]
+    # elif label =='A Zoom F3_03-05-25':
+    #     oneHotEncodedLabel = [0,0,1,0]
+    # elif label =='Location A Sand Forrest':
+    #     oneHotEncodedLabel = [0,0,0,1]
+    # else: #invalid label so return nothing
+    #     return
 
     sample_rate = get_wav_sampling_rate(wav)
     #This means file is likely corrupted
@@ -53,8 +53,9 @@ class Music(DefaultExtractor):
             for filename in files:
                 if filename.endswith(".wav") or filename.endswith(".WAV"):
                     curr_wav=os.path.join(root, filename)
-                    splitArray = str(curr_wav).split("/")
-                    label = splitArray[6]
+                    # splitArray = str(curr_wav).split("/")
+                    # label = splitArray[6]
+                    label=0
                     curr_data = extract_features(curr_wav, label) 
                     #ignore all corrupt files, as determined by an inability to open them and get their sampling rate
                     if curr_data is not None:
@@ -65,7 +66,7 @@ class Music(DefaultExtractor):
         #         f.write(path + "\n")
 
         ds = Dataset.from_list(all_data)
-        class_list = ['Data', 'LA_Sand_Forrest_ULTRASONIC_03-05-25', 'A Zoom F3_03-05-25', 'Location A Sand Forrest']
+        class_list = ["Random", "Random 2"]
 
         split_ds = ds.train_test_split(test_size=0.3) # train is 70%, valid + test is 30%
         valid_test = split_ds["test"].train_test_split(test_size=0.7) #test is 70% of the 30% split
