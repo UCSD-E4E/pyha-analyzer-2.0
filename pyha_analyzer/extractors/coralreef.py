@@ -45,7 +45,7 @@ class CoralReef(DefaultExtractor):
                 # count=0
                 count=0
                 for wav in os.scandir(month.path):
-                    if (wav.name.endswith(".TXT")):
+                    if not wav.name.endswith((".wav", ".WAV")):
                         continue
                     curr_data = extract_features(wav, label) 
                     all_data.append(curr_data)
