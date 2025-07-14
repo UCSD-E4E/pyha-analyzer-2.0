@@ -6,10 +6,10 @@ from .. import AudioDataset
 from datasets import Dataset
 
 #bad_files = []
-def get_wav_sampling_rate(file_path):
+def get_wav_sampling_rate_length(file_path):
     try:
         info = sf.info(file_path)
-        return info.samplerate
+        return info.samplerate, info.frames/info.samplerate
     #about 350 WAV files are corrupt
     except RuntimeError as e:
         #bad_files.append(file_path)
@@ -28,7 +28,7 @@ def extract_features(wav, label):
     # else: #invalid label so return nothing
     #     return
 
-    sample_rate = get_wav_sampling_rate(wav)
+    sample_rate, length = get_wav_sampling_rate_length(wav)
     #This means file is likely corrupted
     if (sample_rate==None):
         return
@@ -39,6 +39,7 @@ def extract_features(wav, label):
         "filepath": str(wav),
         "audio": str(wav),
         "audio_in": {"array": str(wav), "sampling_rate": sample_rate},
+        "length": length
     }
 
 
