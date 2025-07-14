@@ -7,14 +7,36 @@ import pyarrow as pa
 import soundfile as sf
 import librosa
 import numpy as np
+import tempfile
 
 # Perch can only generate embeddings for audio files greater than 5 seconds. Therefore, loop any short audio files to make it atleast 5 seconds
 def pad_short_clip(audio_path):
-    target_len = 5
-    y, sr = librosa.load(audio_path, sr=sf.info(full_path).samplerate)
-    reps = int(np.ceil(target_len / len(y)))
-    y_looped = np.tile(y, reps)[:target_len]
-    return y_looped, sr
+    target_duration_sec = 5
+    samplerate=sf.info(audio_path).samplerate
+    target_len = samplerate * target_duration_sec
+    y, sr = librosa.load(audio_path, sr=samplerate)
+    #pad if less than 5 seconds
+    if len(y) < target_len:
+        reps = int(np.ceil(target_len / len(y)))
+        y = np.tile(y, reps)[:target_len]
+    return np.asarray(y, dtype=np.float32), sr
+
+def generate_embedding(audio_path):
+    info = sf.info(audio_path)
+    duration = info.frames / info.samplerate #faster than using librosa to load length
+    if (duration < 5):
+        formatted_wav, sample_rate = pad_short_clip(audio_path)
+        #creates a new wav file of 5 seconds long to generate embedding and then immediately deletes it
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
+            # Write the array to the temp .wav file
+            sf.write(tmp.name, formatted_wav, sample_rate)
+            # Use the file path for embedding
+            embedding = model.embed(tmp.name)
+    # if >=5 seconds then embed directly
+    else:
+        embedding = model.embed(audio_path)
+    return embedding, duration
+
 
 
 if __name__ == "__main__":
@@ -53,30 +75,33 @@ if __name__ == "__main__":
         for name in filenames:
             if name.endswith(".wav"):
                 full_path = os.path.join(dirpath, name)
+                #makes sure file is not corrupted
                 try:
-                    info = sf.info(full_path)
-                    duration_seconds = librosa.get_duration(path=full_path)
-                    if (duration_seconds<5):
-                        countLessThanFive+=1
-                    if name in filename_to_metadata:
-                        # Case 1: metadata already exists for liked sounds — just add path
-                        filename_to_metadata[name]["FilePath"] = full_path
-                        matched_filenames.add(name)
-                    elif "Liked Sounds" in os.path.normpath(dirpath).split(os.sep):
-                        # Case 2: in "Liked Sounds" folder but not in the metadata csv filename — add blank metadata (this is because there are some files in liked sounds that are not listed in the metadata csv)
-                            # we do still need to give it the metadata frame 
-                        new_entry = {field: "" for field in fieldnames}
-                        new_entry["FileName"] = name
-                        new_entry["FilePath"] = full_path
-                        filename_to_metadata[name] = new_entry
-                        #ensures this 
-                        matched_filenames.add(name)
-                    else:
-                        #not a liked song at all. then, store its path so that you can generate and insert embeddings into lancedb. 
-                        # use the other audio paths in the frame to generate embeddings for queries
-                        all_audio_files.append(str(full_path))
-                except RuntimeError as e:
-                    countInvalid+=1
+                    sf.info(full_path)
+                except (RuntimeError, sf.LibsndfileError):
+                    continue
+
+                # duration_seconds = librosa.get_duration(path=full_path)
+                # if (duration_seconds<5):
+                #     countLessThanFive+=1
+                if name in filename_to_metadata:
+                    # Case 1: metadata already exists for liked sounds — just add path
+                    filename_to_metadata[name]["FilePath"] = full_path
+                    matched_filenames.add(name)
+                elif "Liked Sounds" in os.path.normpath(dirpath).split(os.sep):
+                    # Case 2: in "Liked Sounds" folder but not in the metadata csv filename — add blank metadata (this is because there are some files in liked sounds that are not listed in the metadata csv)
+                        # we do still need to give it the metadata frame 
+                    new_entry = {field: "" for field in fieldnames}
+                    new_entry["FileName"] = name
+                    new_entry["FilePath"] = full_path
+                    filename_to_metadata[name] = new_entry
+                    #ensures this 
+                    matched_filenames.add(name)
+                else:
+                    #not a liked song at all. then, store its path so that you can generate and insert embeddings into lancedb. 
+                    # use the other audio paths in the frame to generate embeddings for queries
+                    all_audio_files.append(str(full_path))
+                
                     # print(f"This audio file {full_path} is not valid (probably corrupted), so nothing is happening")
 
     # === Step 3: Remove unmatched entries ===
@@ -118,31 +143,63 @@ if __name__ == "__main__":
         pa.field("Description", pa.string()),
         pa.field("Duration", pa.string()), #REMEMBER! duration should store the start time to end time of the embedding as a string so be sure to change that. this is because the embedding generates an array of 5 second chunks
         pa.field("FilePath", pa.string()),  
+        pa.field("Looped", pa.bool_()),
         pa.field("vector_embedding", pa.list_(pa.float32(), list_size=1280)),
     ])
     table = db.create_table("music_embeddings", schema=schema)
 
     # # Generate vector embeddings of all audios using perch embeddings and insert into lancedb
     model=bmz.Perch()
+    count=0
+    records_to_insert=[]
+    batch_size_to_insert=100
     # countOfLessThan5=0
     for curr_wav_file in all_audio_files:
-        if (librosa.get_duration(curr_wav_file)<5):
-            wav_file_looped, sample_rate = pad_short_clip(curr_wav_file)
-            embedding = model.embed(wav_file_looped, sr=sample_rate)  # shape: (1, 1280)
-            print("Embedding shape:", embedding.shape)
-    #     #embed this batch
-    #     embedding= model.embed(curr_wav_file)
-    #     numChunks= embedding.shape[0]
-    #     if (numChunks==0) :
-    #         print("numChunks was 0 for ", str(curr_wav_file))
-    #         countOfLessThan5+=1
-    #     print("numChunks is ", numChunks)
-    #     #insert into lancedb
-    #     #ISSUE TO THINK OF: how can we batch change the Duration on line 96
+        #return embedding & duration so you can determine if looped or not
+        embedding, duration= generate_embedding(curr_wav_file)
+
+        #loop through all chunks of 5 second recordings for current wav file and insert into lancedb
+        for i in range(embedding.shape[0]):
+            embedding = np.array(embedding) # forces len of embedding to be 1280 by not letting embedding change dimensions
+            start_sec = i * 5
+            end_sec = (i + 1) * 5
+            duration_str = f"{start_sec}-{end_sec}"
+            metadata = {
+                "FileName": os.path.basename(curr_wav_file),
+                "Format": "",         
+                "Note": "",
+                "Take": "",
+                "Scene": "",
+                "Project": "",
+                "Category": "",
+                "Library": "",
+                "Tape": "",
+                "Channels": "",
+                "Originator": "",
+                "Reference": "",
+                "Description": "",
+                "Duration": duration_str,
+                "FilePath": curr_wav_file,
+                "Looped": duration < 5,
+                "vector_embedding": embedding[i].tolist(),  
+            }
+            records_to_insert.append(metadata)
+            #fast batching for lancedb insertion & memory safe
+            if len(records_to_insert) >= batch_size_to_insert:
+                table.add(records_to_insert)
+                records_to_insert.clear()
+        count+=1
+        if (count>=10):
+            break
+    #insert any remaining records
+    if records_to_insert:
+        table.add(records_to_insert)
+
+    #check stuff was inserted
+    df = table.to_pandas()
+    print(df.head())  # Show first 5 rows
 
         
-
-
 
 #TODO!!
 # generate vector embeddings of liked sounds using perch embeddings
