@@ -19,7 +19,7 @@ def parse_config(config_path):
     return metadata
 
 
-def extract_features(wav, label, site):
+def extract_features(wav, label, site, dataset):
     if label==0:
         oneHotEncodedLabel = [0,1,0] #Non_Degraded_Reef
     elif (label==1):
@@ -40,7 +40,8 @@ def extract_features(wav, label, site):
         "filepath": str(wav.path),
         "audio": str(wav.path),
         "audio_in": {"array": str(wav.path), "sampling_rate": sample_rate},
-        "site": site
+        "site": site,
+        "dataset": dataset
     }
 
 
@@ -88,7 +89,7 @@ class MultiCoralReef(DefaultExtractor):
                         if not wav.name.lower().endswith(".wav"):
                             continue
                         try:
-                            curr_data = extract_features(wav, label, site) 
+                            curr_data = extract_features(wav, label, site, dataset.name) 
                         except (wave.Error, EOFError) as e:
                             print(f"Skipping file {wav.path} due to WAV error: {e}")
                             continue
