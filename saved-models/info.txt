@@ -1,0 +1,14 @@
+(1) coral_moddel_4146a1f.path
+- Contains results of running the model over all 167 GB of Paola's dataset.
+- 99% Cmap & ROCAUC
+- ISSUE: Since all degraded reefs are from site A and all non-degraded reefs are from site B, then it is possible the clasisfier was picking up on sites not degradation
+
+(2) lin_williams_paola_coral_model
+- Contains results of running the model over all 167 GB of Paola's dataset, all 115 GB of Lin et al, and all 7.8 GB of Williams' French Polynesia dataset
+- ~66% CMAP & ROCAUC
+- ISSUE: Since all of Lin's dataset is healthy, it is possible that the results of the model was biased because the dataset was biased
+
+(3) balanced_williams_paola_coral
+- Contains results of running the model over all 7.8 GB of Williams Data & ~ 8 GB of Paola's data. We were sure to balance Paola vs Williams & degraded vs non-degraded
+- ~92% CMAP and ROCAUC
+- ISSUE: We are using only a subset of Paola's dataset

@@ -6,6 +6,8 @@ from datasets import Dataset
 import datasets
 import pandas as pd
 import wave
+import random
+import fnmatch
 
 
 def parse_config(config_path):
@@ -21,13 +23,14 @@ def parse_config(config_path):
 
 def extract_features(wav, label, site, dataset):
     if label==0:
-        oneHotEncodedLabel = [0,1,0] #Non_Degraded_Reef
+        oneHotEncodedLabel = [0,1] #Non_Degraded_Reef
     elif (label==1):
-        oneHotEncodedLabel = [1,0,0] #Degraded_Reef
+        oneHotEncodedLabel = [1,0] #Degraded_Reef
     else: #if label is 2
-        oneHotEncodedLabel = [0,0,1] #Unknown
+        #oneHotEncodedLabel = [0,0,1] #Unknown
+        return
         
-    with wave.open(wav.path, "rb") as wave_file:
+    with wave.open(wav, "rb") as wave_file:
         try:
             sample_rate = wave_file.getframerate()
         except Exception as e:
@@ -50,63 +53,98 @@ class MultiCoralReef(DefaultExtractor):
         super().__init__("CoralReef")
 
     def __call__(self, audio_path, sampling=False):
-        all_data = []
-        #audio_path= "/home/s.kamboj.400/unzipped-coral"
-        count = 0
-        for dataset in os.scandir(audio_path):
-            if not dataset.is_dir():
-                continue
-            for state in os.scandir(dataset.path):
-                if not state.is_dir():
-                    continue
-                print(state.name)
-                for month in os.scandir(state.path):
-                    if not month.is_dir():
-                        continue
-                    if dataset.name == 'Paola':
-                        label = int(state.name == "Degraded_Reef") # 1 for Degraded_Reef, 0 for Non_Degraded_Reef
-                    elif dataset.name == 'Lin_et_al_2021': # all of Lin's data set is Non-degraded
-                        label = 0
-                    #use the script to separate Indonesai into healthy and non-healthy
-                    elif dataset.name=='Williams_et_al_2024': 
-                        #label = int(state.name == "Degraded_Reef") # Cleared all unknowns to make it back to binary
-                        if (state.name=="Degraded_Reef"):
-                            label=1
-                        elif (state.name=="Non_Degraded_Reef"):
-                            label = 0
-                        else:
-                            label = 2 #2 is for unknown
-                    else:
-                        label=2
-                    
-                    site = state.name
-                    
+        # Constants
 
-                    
-                    # count=0
-                    for wav in os.scandir(month.path):
-                        #if (wav.name.endswith(".TXT")):
-                        if not wav.name.lower().endswith(".wav"):
-                            continue
-                        try:
-                            curr_data = extract_features(wav, label, site, dataset.name) 
-                        except (wave.Error, EOFError) as e:
-                            print(f"Skipping file {wav.path} due to WAV error: {e}")
-                            continue
-                        if curr_data is not None:
-                            all_data.append(curr_data)
-                            #comment out the next 3 lines to get all the data
-                            # count+=1
-                            # if (count> 50):
-                            #     break
-                            if site not in ['Degraded_Reef', 'Non_Degraded_Reef']:
-                                count += 1
-                            
-        print('count:', count)
-        
+        # Organize into buckets
+        buckets = {
+            ('Paola', 0): [],
+            ('Paola', 1): [],
+            ('Williams_et_al_2024', 0): [],
+            ('Williams_et_al_2024', 1): [],
+        }
+
+        for root, dirs, files in os.walk(audio_path):
+            for file in files:
+                if not file.lower().endswith(".wav"):
+                    continue
+
+                file_path = os.path.join(root, file)
+
+                # Detect dataset
+                if "Paola" in file_path:
+                    dataset = "Paola"
+                elif "Williams_et_al_2024" in file_path:
+                    dataset = "Williams_et_al_2024"
+                else:
+                    continue  # skip others like Lin
+
+                # Detect label
+                if "Non_Degraded_Reef" in file_path:
+                    label = 0
+                    site = "Non_Degraded_Reef"
+                elif "Degraded_Reef" in file_path:
+                    label = 1
+                    site = "Degraded_Reef"
+                else:
+                    continue
+
+                buckets[(dataset, label)].append((file_path, label, site))
+
+        # 1: Since Williams dataset is much smaller than Paola, determine its size to make sure we know Paola's
+        w0 = len(buckets[('Williams_et_al_2024', 0)])
+        w1 = len(buckets[('Williams_et_al_2024', 1)])
+
+        # balance degraded and non-degraded to make it equal. this means # paola might be greater than # williams for either degraded or non-degraded but hopefully not by too much
+        max_len = max(w0, w1)
+        # Step 2: Each dataset in William's dataset is about 60 seconds long and we are breaking every 5 second chunk into a spectogram so one williams file, contributes 12 spectograms. ensure paola, where one file contributed only one spectogram, is 12x as much as williams
+        if (max_len-w0)==0:
+            p0_target = int((60/5) * max_len)
+            p1_target = int((60/5) * (max_len-w1))
+        else: #max_len-w1 = 0
+            p0_target = int((60/5) * (max_len-w0))
+            p1_target = int((60/5) * max_len)
+
+
+        # # Step 3: Check if enough Paola data
+        # if len(buckets[('Paola', 0)]) < p0_target:
+        #     raise ValueError(f"Not enough Paola non-degraded files: found {len(buckets[('Paola', 0)])}, need {p0_target}")
+        # if len(buckets[('Paola', 1)]) < p1_target:
+        #     raise ValueError(f"Not enough Paola degraded files: found {len(buckets[('Paola', 1)])}, need {p1_target}")
+
+
+        # Step 4: Sample Paola files
+        random.seed(42)
+        p0_samples = random.sample(buckets[('Paola', 0)], p0_target)
+        p1_samples = random.sample(buckets[('Paola', 1)], p1_target)
+
+        # Step 5: Gather all samples
+        w0_samples = buckets[('Williams_et_al_2024', 0)]
+        w1_samples = buckets[('Williams_et_al_2024', 1)]
+        sampled= p0_samples + w0_samples + p1_samples
+
+        # Step 7: Feature extraction
+        all_data = []
+        for file_path, label, site in sampled:
+            try:
+                curr_data = extract_features(file_path, label, site)
+                if curr_data is not None:
+                    all_data.append(curr_data)
+            except (wave.Error, EOFError) as e:
+                print(f"Skipping {file_path} due to error: {e}")
+                continue
+
+        # Summary
+        print(f"Loaded: {len(all_data)} samples")
+        print(f"  Paola Non-Degraded: {len(p0_samples)}")
+        print(f"  Paola Degraded:     {len(p1_samples)}")
+        print(f"  Williams Non-Degraded: {len(w0_samples)}")
+        print(f"  Williams Degraded:     {len(w1_samples)}")
+        print(f"  Total: {len(all_data)}")
+
+
         ds = Dataset.from_list(all_data)
-        class_list = ["Degraded_Reef" , "Non_Degraded_Reef", "Unknown"]
-        #class_list = ["Degraded_Reef" , "Non_Degraded_Reef"]
+        #class_list = ["Degraded_Reef" , "Non_Degraded_Reef", "Unknown"]
+        class_list = ["Degraded_Reef" , "Non_Degraded_Reef"]
         
         ds = ds.class_encode_column('site')
         
