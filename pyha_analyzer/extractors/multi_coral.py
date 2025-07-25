@@ -40,9 +40,9 @@ def extract_features(wav, label, site, dataset):
     return {
         "sample_rate": sample_rate,
         "labels": oneHotEncodedLabel,
-        "filepath": str(wav.path),
-        "audio": str(wav.path),
-        "audio_in": {"array": str(wav.path), "sampling_rate": sample_rate},
+        "filepath": str(wav),
+        "audio": str(wav),
+        "audio_in": {"array": str(wav), "sampling_rate": sample_rate},
         "site": site,
         "dataset": dataset
     }
@@ -126,7 +126,7 @@ class MultiCoralReef(DefaultExtractor):
         all_data = []
         for file_path, label, site in sampled:
             try:
-                curr_data = extract_features(file_path, label, site)
+                curr_data = extract_features(file_path, label, site, dataset)
                 if curr_data is not None:
                     all_data.append(curr_data)
             except (wave.Error, EOFError) as e:
