@@ -61,9 +61,9 @@ class GradCAM:
                             (spectrogram_resized.max() - spectrogram_resized.min())
 
         label = item.get("labels", "Unknown")
-        if ((label ==[ 0, 1, 0]).all()):
+        if ((label ==[ 0, 1]).all()):
             currLabel = "Non_Degraded_Reef"
-        elif ((label == [1,0, 0]).all()):
+        elif ((label == [1,0]).all()):
             currLabel = "Degraded_Reed"
         else:
             currLabel="Unknown"
@@ -90,7 +90,7 @@ class GradCAM:
         plt.subplots_adjust(top=0.85)
 
         # Save to PDF or show
-        #fig.savefig(p, format='pdf')
+        # fig.savefig(p, format='pdf')
         # plt.show()
         plt.close(fig)
 
