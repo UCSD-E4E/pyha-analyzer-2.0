@@ -21,7 +21,7 @@ def parse_config(config_path):
     return metadata
 
 
-def extract_features(wav, label, site):
+def extract_features(wav, label, site, dataset):
     if label==0:
         oneHotEncodedLabel = [0,1] #Non_Degraded_Reef
     elif (label==1):
@@ -40,10 +40,11 @@ def extract_features(wav, label, site):
     return {
         "sample_rate": sample_rate,
         "labels": oneHotEncodedLabel,
-        "filepath": str(wav),
-        "audio": str(wav),
-        "audio_in": {"array": str(wav), "sampling_rate": sample_rate},
-        "site": site
+        "filepath": str(wav.path),
+        "audio": str(wav.path),
+        "audio_in": {"array": str(wav.path), "sampling_rate": sample_rate},
+        "site": site,
+        "dataset": dataset
     }
 
 
