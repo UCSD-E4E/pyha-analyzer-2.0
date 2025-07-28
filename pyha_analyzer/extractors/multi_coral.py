@@ -90,37 +90,31 @@ class MultiCoralReef(DefaultExtractor):
 
                 buckets[(dataset, label)].append((file_path, label, site))
 
-        # 1: Since Williams dataset is much smaller than Paola, determine its size to make sure we know Paola's
+       
+
+        # Step 1: Get Williams data sizes
         w0 = len(buckets[('Williams_et_al_2024', 0)])
         w1 = len(buckets[('Williams_et_al_2024', 1)])
 
-        # balance degraded and non-degraded to make it equal. this means # paola might be greater than # williams for either degraded or non-degraded but hopefully not by too much
-        max_len = max(w0, w1)
-        # Step 2: Each dataset in William's dataset is about 60 seconds long and we are breaking every 5 second chunk into a spectogram so one williams file, contributes 12 spectograms. ensure paola, where one file contributed only one spectogram, is 12x as much as williams
-        if (max_len-w0)==0:
-            p0_target = int((60/5) * max_len)
-            p1_target = int((60/5) * (max_len-w1))
-        else: #max_len-w1 = 0
-            p0_target = int((60/5) * (max_len-w0))
-            p1_target = int((60/5) * max_len)
+        # Step 2: Pick min of w0 and w1 for balancing
+        min_w = min(w0, w1)
 
-
-        # # Step 3: Check if enough Paola data
-        # if len(buckets[('Paola', 0)]) < p0_target:
-        #     raise ValueError(f"Not enough Paola non-degraded files: found {len(buckets[('Paola', 0)])}, need {p0_target}")
-        # if len(buckets[('Paola', 1)]) < p1_target:
-        #     raise ValueError(f"Not enough Paola degraded files: found {len(buckets[('Paola', 1)])}, need {p1_target}")
-
-
-        # Step 4: Sample Paola files
+        # Step 3: Sample Williams equally
         random.seed(42)
-        p0_samples = random.sample(buckets[('Paola', 0)], p0_target)
-        p1_samples = random.sample(buckets[('Paola', 1)], p1_target)
+        w0_samples = random.sample(buckets[('Williams_et_al_2024', 0)], min_w)
+        w1_samples = random.sample(buckets[('Williams_et_al_2024', 1)], min_w)
 
-        # Step 5: Gather all samples
-        w0_samples = buckets[('Williams_et_al_2024', 0)]
-        w1_samples = buckets[('Williams_et_al_2024', 1)]
-        sampled= p0_samples + w0_samples + p1_samples
+        # Step 4: Sample same number from Paola for each label
+        p0_available = len(buckets[('Paola', 0)])
+        p1_available = len(buckets[('Paola', 1)])
+        #because min_w produces 12 spectograms per clip since it is 60 seconds long and each spectogram is for 5 seconds
+        p_sample_size = min(int(min_w*(60/5)), p0_available, p1_available)
+
+        p0_samples = random.sample(buckets[('Paola', 0)], p_sample_size)
+        p1_samples = random.sample(buckets[('Paola', 1)], p_sample_size)
+
+        # Step 5: Combine samples
+        sampled = w0_samples + w1_samples + p0_samples + p1_samples
 
         # Step 7: Feature extraction
         all_data = []
@@ -139,7 +133,11 @@ class MultiCoralReef(DefaultExtractor):
         print(f"  Paola Degraded:     {len(p1_samples)}")
         print(f"  Williams Non-Degraded: {len(w0_samples)}")
         print(f"  Williams Degraded:     {len(w1_samples)}")
-        print(f"  Total: {len(all_data)}")
+        print("")
+        print(f"  Paola Total: {len(p0_samples) + len(p1_samples)}")
+        print(f"  Williams Total: {len(w0_samples) + len(w1_samples)}")
+        print(f"  Non-degraded total: {len(p0_samples) + len(w0_samples)}")
+        print(f"  Degraded total: {len(p1_samples) + len(w1_samples)}")
 
 
         ds = Dataset.from_list(all_data)
