@@ -103,7 +103,7 @@ class MultiCoralReef(DefaultExtractor):
                 else:
                     continue # skip files without labels
 
-                buckets[(dataset, label)].append((file_path, label, site))
+                buckets[(dataset, label)].append((file_path, label, site, dataset))
                 
         # Define how many spectrograms each dataset contributes per file
         dataset_multipliers = {
@@ -163,7 +163,7 @@ class MultiCoralReef(DefaultExtractor):
         
         # Step 7: Feature extraction
         all_data = []
-        for file_path, label, site in sampled:
+        for file_path, label, site, dataset in sampled:
             try:
                 curr_data = extract_features(file_path, label, site, dataset)
                 if curr_data is not None:
