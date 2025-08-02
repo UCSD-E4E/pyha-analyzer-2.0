@@ -53,9 +53,9 @@ class CoralReef(DefaultExtractor):
                     # count+=1
                     # if (count> 50):
                     #     break
-                    count+=1
-                    if (count> 200):
-                        break
+                    # count+=1
+                    # if (count> 200):
+                    #     break
 
         ds = Dataset.from_list(all_data)
         class_list = ["Degraded_Reef" , "Non_Degraded_Reef"]
