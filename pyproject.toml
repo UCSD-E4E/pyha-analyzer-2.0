@@ -71,8 +71,10 @@ name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
-[tool.setuptools]
-packages = ["pyha_analyzer"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyha_analyzer*"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
