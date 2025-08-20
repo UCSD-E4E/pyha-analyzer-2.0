@@ -14,12 +14,8 @@ CLIP_PATH = "/home/super/data/music/Location A (Sand Forrest)/A Zoom F3_03-05-25
 TEMPLATE_PATH = "/home/super/data/music/templates"
 OUTPUT_DIR = "/home/super/template_matching_results"
 
-# Customizable parameters for template matching:
-# Threshold for detection confidence
-# Suppression distance to avoid multiple detections in close proximity
-
+# Customizable threshold for detections
 THRESHOLD = 0.6
-SUPPRESSION_DISTANCE = 50
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -247,10 +243,15 @@ with open(OUTPUT_FILE, 'w') as f:
                     
                     total_matches_count += len(matches)
 
+                    # Set the suppression_distance to half of the length of the template
+                    template_length_frames = template_img.shape[1]
+                    suppression_distance = int(template_length_frames)
+                    f.write(f"Suppression distance (frames): {suppression_distance}\n")
+
                     # Apply non-maximum suppression to avoid overlapping detections
                     selected = []
                     for y, x, score in matches:
-                        if all(abs(x - xc) > SUPPRESSION_DISTANCE for _, xc, _ in selected):
+                        if all(abs(x - xc) > suppression_distance for _, xc, _ in selected):
                             selected.append((y, x, score))
 
                     f.write(f"Kept {len(selected)} non-overlapping matches\n")
