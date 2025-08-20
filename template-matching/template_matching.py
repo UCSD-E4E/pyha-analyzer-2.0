@@ -127,7 +127,6 @@ with open(OUTPUT_FILE, 'w') as f:
     f.write(f"Total templates: {len(template_files)}\n")
     f.write(f"Unique species templates: {len(selected_templates)}\n")
     f.write(f"Threshold: {THRESHOLD}\n")
-    f.write(f"Suppression distance: {SUPPRESSION_DISTANCE}\n")
     f.write(f"CSV output file: {CSV_OUTPUT_FILE}\n\n")
     
     f.write("Species template mapping:\n")
@@ -245,7 +244,7 @@ with open(OUTPUT_FILE, 'w') as f:
 
                     # Set the suppression_distance to half of the length of the template
                     template_length_frames = template_img.shape[1]
-                    suppression_distance = int(template_length_frames)
+                    suppression_distance = int(template_length_frames / 2)
                     f.write(f"Suppression distance (frames): {suppression_distance}\n")
 
                     # Apply non-maximum suppression to avoid overlapping detections
