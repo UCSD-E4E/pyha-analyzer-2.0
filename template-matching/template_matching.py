@@ -23,7 +23,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 # Output file paths for results and CSV file
 
 # The CSV file will contain all matches found during the template matching process, showing the name of the template, 
-# the name of the clip, the timestamp of the match, and the score of the match.
+# the name of the clip, the timestamp of the match, and the score of the match
 
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"results_{timestamp}.txt")
 CSV_OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"all_matches_{timestamp}.csv")
@@ -61,7 +61,7 @@ def find_dominant_frequency_range(spectrogram, energy_threshold=0.1):
 def filter_spectrogram_by_frequency_range(spectrogram, freq_min, freq_max):
     return spectrogram[freq_min:freq_max, :]
 
-# Efficiently load audio files with decimation to improve time
+# Efficiently load audio files using decimation to improve time
 
 def fast_audio_load(audio_path, target_sr=22050):
     y, original_sr = sf.read(audio_path)
@@ -232,19 +232,9 @@ with open(OUTPUT_FILE, 'w') as f:
                     matches.sort(key=lambda x: x[2], reverse=True)
                     f.write(f"Found {len(matches)} matches above threshold {THRESHOLD}\n")
 
-                    # Save all matches to CSV with timestamps
-                    seconds_per_col = 512 / sr_clip
-                    with open(CSV_OUTPUT_FILE, 'a', newline='') as csvfile:
-                        csv_writer = csv.writer(csvfile)
-                        for y, x, score in matches:
-                            timestamp_match = x * seconds_per_col
-                            csv_writer.writerow([template_name_clean, clip, timestamp_match, score])
-                    
-                    total_matches_count += len(matches)
-
-                    # Set the suppression_distance to half of the length of the template
+                    # Set the suppression_distance to the length of the template
                     template_length_frames = template_img.shape[1]
-                    suppression_distance = int(template_length_frames / 2)
+                    suppression_distance = int(template_length_frames)
                     f.write(f"Suppression distance (frames): {suppression_distance}\n")
 
                     # Apply non-maximum suppression to avoid overlapping detections
@@ -254,6 +244,15 @@ with open(OUTPUT_FILE, 'w') as f:
                             selected.append((y, x, score))
 
                     f.write(f"Kept {len(selected)} non-overlapping matches\n")
+
+                    # Save only filtered matches to CSV with timestamps
+                    seconds_per_col = 512 / sr_clip
+                    with open(CSV_OUTPUT_FILE, 'a', newline='') as csvfile:
+                        csv_writer = csv.writer(csvfile)
+                        for y, x, score in selected:
+                            timestamp_match = x * seconds_per_col
+                            csv_writer.writerow([template_name_clean, clip, timestamp_match, score])
+                    total_matches_count += len(selected)
                     
                     clip_names.append(clip)
                     match_counts.append(len(selected))
