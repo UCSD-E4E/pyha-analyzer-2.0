@@ -94,6 +94,16 @@ class PyhaTrainer(Trainer):
             compute_metrics=compute_metrics
         )
 
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        """
+        Use whatever loss the model returns.
+        This is important because EfficientNet.forward() now returns a contrastive loss
+        when audio_in has multiple views.
+        """
+        outputs = model(**inputs)
+        loss = outputs["loss"] if isinstance(outputs, dict) else outputs.loss
+        return (loss, outputs) if return_outputs else loss
+    
     def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="valid"):
         # print(eval_dataset)
         if eval_dataset is None:
