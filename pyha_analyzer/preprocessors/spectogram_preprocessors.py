@@ -52,7 +52,7 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
                 y = np.pad(y, (sr * self.duration) - y.shape[-1])
 
             # Audio Based Augmentations
-            if self.augment != None:
+            if self.augment is not None:
                y, label = self.augment(y, sr, label)
 
 
@@ -110,7 +110,6 @@ class MelSpectrogramPreprocessorsNew(PreProcessorBase):
     def __call__(self, batch):
         new_audio = []
         new_labels = []
-        new_metadata = []
 
         for item_idx in range(len(batch["audio"])):
             label = batch["labels"][item_idx]

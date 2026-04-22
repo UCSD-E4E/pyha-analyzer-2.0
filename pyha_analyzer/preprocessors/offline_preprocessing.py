@@ -1,5 +1,4 @@
 from preprocessors import PreProcessorBase
-import pandas as pd
 from chunkingMethods import chunkingMethod
 
 
@@ -34,7 +33,7 @@ class OfflinePreprocessor(PreProcessorBase):
 
         for item_idx in range(len(batch["audio"])):
             
-            data = chunkingMethod.chunkingMethod(
+            chunkingMethod.chunkingMethod(
                 old_detected_events[item_idx],
                 old_events_desc[item_idx],
                 clip_length,

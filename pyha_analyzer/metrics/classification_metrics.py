@@ -6,8 +6,6 @@ from torchmetrics.classification import (
     MultilabelAUROC,
 )
 from .evaluate import Metric, ComputeMetricsBase
-from transformers import EvalPrediction
-from typing import Dict
 
 
 # TODO: should the metric define the name being used?
@@ -23,7 +21,7 @@ class cMAP(Metric):
         top_n looks at performance from the top_n number of species
         agg diffrent aggerations of the metric across classes
         """
-        if mutlilabel:
+        if multilabel:
             self.metric = MultilabelAveragePrecision(
                 num_labels=num_classes, average="none"
             )

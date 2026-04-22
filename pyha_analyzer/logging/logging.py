@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 """
 Create Shared Logging System for Common Metrics

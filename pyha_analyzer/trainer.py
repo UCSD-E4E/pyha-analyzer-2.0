@@ -1,8 +1,8 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
-from .logging.wandb import WANDBLogging, Logger
+from .logging.wandb import Logger
 from .dataset import AudioDataset
 from .constants import MODEL_COLUMNS
-from .constants import DEFAULT_COLUMNS, DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
+from .constants import DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
 from .models.base_model import BaseModel
 from .metrics.evaluate import ComputeMetricsBase
 from .metrics.classification_metrics import AudioClassificationMetrics
@@ -77,14 +77,11 @@ class PyhaTrainer(Trainer):
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
+        num_classes = self.dataset.get_number_species()
         if metrics is not None and isinstance(metrics, ComputeMetricsBase):
             compute_metrics = metrics
         else:
             compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
-
-        # Will create default metrics such as cMAP and AUROC
-        num_classes = self.dataset.get_number_species()
-        #print("num_classes is ", num_classes)
 
         
 

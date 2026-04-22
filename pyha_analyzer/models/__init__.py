@@ -1,1 +1,1 @@
-from .efficientnet import EfficentNet
+from .efficientnet import EfficentNet as EfficentNet

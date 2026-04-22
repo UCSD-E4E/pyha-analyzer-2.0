@@ -1,4 +1,4 @@
-from .spectogram_preprocessors import MelSpectrogramPreprocessors
-from .spectogram_preprocessors import MelSpectrogramPreprocessorsNew
-from .preprocessors import PreProcessorBase
-from .augmentations import MixItUp, ComposeAudioLabel
+from .spectogram_preprocessors import MelSpectrogramPreprocessors as MelSpectrogramPreprocessors
+from .spectogram_preprocessors import MelSpectrogramPreprocessorsNew as MelSpectrogramPreprocessorsNew
+from .preprocessors import PreProcessorBase as PreProcessorBase
+from .augmentations import MixItUp as MixItUp, ComposeAudioLabel as ComposeAudioLabel

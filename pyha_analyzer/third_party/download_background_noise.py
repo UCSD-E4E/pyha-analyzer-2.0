@@ -26,7 +26,7 @@ def main():
     repo_type = "dataset"
     # Download the file
     for filename in filenames:
-        file_path = hf_hub_download(
+        hf_hub_download(
             repo_id=repo_id,
             filename=filename,
             subfolder=subfolder,

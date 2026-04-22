@@ -16,11 +16,10 @@ There are 3 main classes
 See timm_model.py for example about how these classes can be implemented.
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from functools import wraps
 from collections import UserDict
 
-from pyha_analyzer.models.base_model import BaseModel
 from transformers import PreTrainedModel, PretrainedConfig
 import numpy as np
 

@@ -3,11 +3,8 @@ from datasets import ClassLabel, Sequence, Audio
 from .. import AudioDataset
 import os
 from datasets import Dataset
-import datasets
-import pandas as pd
 import wave
 import random
-import fnmatch
 import sys
 
 

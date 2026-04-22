@@ -60,13 +60,6 @@ class GradCAM:
         spectrogram_resized = (spectrogram_resized - spectrogram_resized.min()) / \
                             (spectrogram_resized.max() - spectrogram_resized.min())
 
-        label = item.get("labels", "Unknown")
-        if ((label ==[ 0, 1]).all()):
-            currLabel = "Non_Degraded_Reef"
-        elif ((label == [1,0]).all()):
-            currLabel = "Degraded_Reed"
-        else:
-            currLabel="Unknown"
         filepath = item.get("filepath", "Unknown")
         filepath = ("/").join(filepath.split("/")[-3:])
 

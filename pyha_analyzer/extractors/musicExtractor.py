@@ -11,7 +11,7 @@ def get_wav_sampling_rate_length(file_path):
         info = sf.info(file_path)
         return info.samplerate, info.frames/info.samplerate
     #about 350 WAV files are corrupt
-    except RuntimeError as e:
+    except RuntimeError:
         #bad_files.append(file_path)
         return None
 
@@ -30,7 +30,7 @@ def extract_features(wav, label):
 
     sample_rate, length = get_wav_sampling_rate_length(wav)
     #This means file is likely corrupted
-    if (sample_rate==None):
+    if sample_rate is None:
         return
 
     return {
