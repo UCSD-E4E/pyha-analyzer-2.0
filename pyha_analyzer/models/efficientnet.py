@@ -6,6 +6,11 @@ import torch
 
 
 class EfficientNetInputs(ModelInput):
+    def __init__(self, labels, waveform=None, spectrogram=None):
+        super().__init__(labels, waveform=waveform, spectrogram=spectrogram)
+        self.labels = labels
+        self.spectrogram = spectrogram
+
     @classmethod
     def from_dict(cls, some_input: dict):
         labels = some_input["labels"]
