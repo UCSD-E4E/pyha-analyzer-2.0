@@ -1,9 +1,19 @@
 # https://huggingface.co/docs/transformers/en/custom_models
-from transformers import PretrainedConfig, PreTrainedModel
+from transformers import PretrainedConfig
 from timm.models.resnet import BasicBlock, Bottleneck, ResNet
 from torch import nn
 from typing import List
-from .base_model import BaseModel, has_required_inputs
+from .base_model import Model, ModelInput, ModelOutput, has_required_inputs
+
+
+class ResnetInputs(ModelInput):
+    @classmethod
+    def from_dict(cls, some_input: dict):
+        labels = some_input["labels"]
+        spectrogram = some_input.get("spectrogram") or some_input.get("audio_in")
+        waveform = some_input.get("waveform") or some_input.get("audio")
+        assert spectrogram is not None or waveform is not None
+        return cls(labels, spectrogram=spectrogram, waveform=waveform)
 
 
 class ResnetConfig(PretrainedConfig):
@@ -46,12 +56,13 @@ class ResnetConfig(PretrainedConfig):
 BLOCK_MAPPING = {"basic": BasicBlock, "bottleneck": Bottleneck}
 
 
-class ResnetModel(PreTrainedModel, BaseModel):
+class ResnetModel(Model, nn.Module):
     config_class = ResnetConfig
 
-    def __init__(self, config):
-        PreTrainedModel.__init__(self, config)
-        BaseModel.__init__(self)
+    def __init__(self, config: ResnetConfig):
+        super().__init__()
+        self.input_format = ResnetInputs
+        self.config = config
         block_layer = BLOCK_MAPPING[config.block_type]
         self.model = ResNet(
             block_layer,
@@ -64,15 +75,10 @@ class ResnetModel(PreTrainedModel, BaseModel):
             stem_type=config.stem_type,
             avg_down=config.avg_down,
         )
-
         self.loss_func = nn.BCEWithLogitsLoss()
 
     @has_required_inputs()
-    # TODO Bug, when we are preprocessing live, we need to have audio defined here
-    # A solution could be we change this to kwargs and use has_required_inputs..
-    def forward(self, audio, audio_in, labels=None):
-        logits = self.model.forward(audio_in)
-        return_dict = {"logits": logits}
-        if labels is not None:
-            return_dict["loss"] = self.loss_func(logits, labels)
-        return return_dict
+    def forward(self, x: ResnetInputs) -> ModelOutput:
+        logits = self.model(x.spectrogram)
+        loss = self.loss_func(logits, x.labels)
+        return ModelOutput(logits=logits, loss=loss, labels=x.labels)
