@@ -1,5 +1,5 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
-from .logging.wandb import WANDBLogging
+from .logging.wandb import WANDBLogging, Logger
 from .dataset import AudioDataset
 from .constants import MODEL_COLUMNS
 from .constants import DEFAULT_COLUMNS, DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
@@ -56,8 +56,10 @@ class PyhaTrainer(Trainer):
         dataset: AudioDataset,
         metrics: ComputeMetricsBase = None,
         training_args: PyhaTrainingArguments = None,
+        logger: Logger = None,
         data_collator=None,
         preprocessor=None,
+        ignore_keys=["audio", "audio-in"]
     ):
         assert issubclass(type(model), BaseModel), (
             "PyhaTrainer only works with BaseModel. Please have model inherit from BaseModel"
@@ -67,22 +69,32 @@ class PyhaTrainer(Trainer):
         self.training_args = (training_args if training_args 
                               else PyhaTrainingArguments("working_dir"))
 
-        self.wandb_logger = WANDBLogging(self.training_args.project_name)
+
+        self.logger = logger
+
+        # self.wandb_logger = WANDBLogging(self.training_args.project_name)
+
         self.dataset = dataset
 
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
-        # if metrics is not None:
-        #     self.compute_metrics = metrics
-        # else:
+        if metrics is not None and isinstance(metrics, ComputeMetricsBase):
+            compute_metrics = metrics
+        else:
+            compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
 
         # Will create default metrics such as cMAP and AUROC
         num_classes = self.dataset.get_number_species()
         #print("num_classes is ", num_classes)
 
-        #TODO potentially change back to what is commented
-        compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
-        # metrics = AudioClassificationMetrics([], num_classes=num_classes)
-        # print("metrics for cMAP and ROCAUC from PyhaTrainer are ", metrics.metrics["cMAP"].metric)
+        
+
+        ## HANDLES DEFAULT ARGUMENTS FOR HUGGING FACE TRAINER
+        if training_args is None:
+            training_args = PyhaTrainingArguments("working_dir")
+
+        self.training_args = training_args
+
+        self.ignore_keys = ignore_keys
 
         super().__init__(
             model,

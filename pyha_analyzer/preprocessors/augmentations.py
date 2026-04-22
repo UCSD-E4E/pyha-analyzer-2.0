@@ -1,5 +1,6 @@
 from .preprocessors import PreProcessorBase
 from audiomentations import Compose, AddBackgroundNoise #TODO BaseWaveformTransform Didn't exist here
+from audiomentations.core.transforms_interface import BaseWaveformTransform
 import random
 import numpy as np
 from copy import copy
@@ -17,7 +18,7 @@ class AudiomentationBasePreprocessor(PreProcessorBase):
         result = self.augmentation(batch)
         return result
     
-class AudioLabelPreprocessor(PreProcessorBase):
+class AudioLabelPreprocessor(PreProcessorBase, BaseWaveformTransform):
     """
     AudioLabelPreprocessor: Audiomentions like augmentation but has extra parameters for changing the label
 
@@ -98,6 +99,7 @@ class ComposeAudioLabel(PreProcessorBase, Compose):
         self.p = p
         self.shuffle = shuffle
         self.augmentations = augmentations
+        self.transforms = augmentations
         self.num_augmentations = len(augmentations)
         #self.compose = Compose(self.augmentations, p=self.p, shuffle=self.shuffle)
         PreProcessorBase.__init__(self, 
