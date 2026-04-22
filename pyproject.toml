@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "audiomentations>=0.40.0",
-    "datasets>=3.5.1",
+    "datasets<4.0.0", 
     "ipykernel>=6.29.5",
     "ipywidgets>=8.1.6",
     "librosa>=0.10.2.post1",
@@ -33,6 +33,11 @@ cu126 = [
   "torchvision>=0.22.0",
 ]
 
+cu130 = [
+  "torch>=2.7.0",
+  "torchvision>=0.22.0",
+]
+
 wandb = [
   "wandb>=0.19.10",
 ]
@@ -44,6 +49,7 @@ conflicts = [
     { extra = "cpu" },
     { extra = "cu128" },
     { extra = "cu126" },
+    { extra = "cu130" },
   ],
 ]
 
@@ -52,12 +58,15 @@ torch = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu128", extra = "cu128" },
   { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
 ]
 torchvision = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu128", extra = "cu128" },
   { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
 ]
+
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -72,6 +81,11 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 
