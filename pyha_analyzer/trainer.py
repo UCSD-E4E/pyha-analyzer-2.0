@@ -1,6 +1,7 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
 from .logging.wandb import WANDBLogging, Logger
 from .dataset import AudioDataset
+from .constants import MODEL_COLUMNS
 from .constants import DEFAULT_COLUMNS, DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
 from .models.base_model import BaseModel
 from .metrics.evaluate import ComputeMetricsBase
@@ -27,10 +28,10 @@ class PyhaTrainingArguments(TrainingArguments):
                  run_name: str=DEFAULT_RUN_NAME,
                  project_name: str=DEFAULT_PROJECT_NAME):
         super().__init__(working_dir)
-        
+        #self.label_names = DEFAULT_COLUMNS
+        self.label_names = MODEL_COLUMNS
         self.run_name = run_name
         self.project_name = project_name
-        self.label_names = DEFAULT_COLUMNS
         self.logging_strategy = IntervalStrategy.STEPS
         self.logging_steps = 10
         self.eval_strategy = IntervalStrategy.STEPS
@@ -83,6 +84,7 @@ class PyhaTrainer(Trainer):
 
         # Will create default metrics such as cMAP and AUROC
         num_classes = self.dataset.get_number_species()
+        #print("num_classes is ", num_classes)
 
         
 
@@ -94,7 +96,6 @@ class PyhaTrainer(Trainer):
 
         self.ignore_keys = ignore_keys
 
-
         super().__init__(
             model,
             training_args,
@@ -102,7 +103,7 @@ class PyhaTrainer(Trainer):
             eval_dataset=dataset["valid"],
             data_collator=data_collator,
             processing_class=preprocessor,
-            compute_metrics=compute_metrics,
+            compute_metrics=compute_metrics
         )
 
     def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="valid"):
@@ -114,11 +115,13 @@ class PyhaTrainer(Trainer):
         if ignore_keys is None:
             # is this the best place for this?
             # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = self.ignore_keys
-
-        results = super().evaluate(
+            ignore_keys = ["audio", "audio-in"]
+            #ignore_keys=[]
+        
+        result = super().evaluate(
             eval_dataset=eval_dataset,
             ignore_keys=ignore_keys,
+            #ignore_keys=[],
             metric_key_prefix=metric_key_prefix,
         )
-        return results
+        return result

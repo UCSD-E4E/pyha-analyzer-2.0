@@ -211,3 +211,4 @@ data/
 wandb/
 data_birdset/
 experiment_*.py
+database

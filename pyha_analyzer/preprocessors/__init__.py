@@ -1,3 +1,4 @@
 from .spectogram_preprocessors import MelSpectrogramPreprocessors
+from .spectogram_preprocessors import MelSpectrogramPreprocessorsNew
 from .preprocessors import PreProcessorBase
 from .augmentations import MixItUp, ComposeAudioLabel
