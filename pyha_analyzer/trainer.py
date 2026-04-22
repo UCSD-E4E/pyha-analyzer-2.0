@@ -1,5 +1,5 @@
 from transformers import Trainer, TrainingArguments, IntervalStrategy
-from .logging.wandb import Logger
+# from .logging.wandb import Logger
 from .dataset import AudioDataset
 from .constants import MODEL_COLUMNS
 from .constants import DEFAULT_PROJECT_NAME, DEFAULT_RUN_NAME
@@ -40,6 +40,7 @@ class PyhaTrainingArguments(TrainingArguments):
         self.per_device_train_batch_size = 64
         self.per_device_eval_batch_size = 32
         self.dataloader_num_workers = 4
+        self.bf16 = True
 
         # In inferance, model saves all predictions on GPU by default
         # So in soundscape evals, this can be expensive
@@ -56,7 +57,7 @@ class PyhaTrainer(Trainer):
         dataset: AudioDataset,
         metrics: ComputeMetricsBase = None,
         training_args: PyhaTrainingArguments = None,
-        logger: Logger = None,
+        logger  = None, #Logger fix logging system 
         data_collator=None,
         preprocessor=None,
         ignore_keys=["audio", "audio-in"]
@@ -110,10 +111,10 @@ class PyhaTrainer(Trainer):
             metric_key_prefix = "valid"
 
         if ignore_keys is None:
-            # is this the best place for this?
-            # there maybe a training_arg that defines this by default. Should be changed there...
-            ignore_keys = ["audio", "audio-in"]
-            #ignore_keys=[]
+            # Read ignore_keys from the model's output format so that custom
+            # ModelOutput subclasses with different ignore_keys are respected.
+            output_format = getattr(self.model, "output_format", None)
+            ignore_keys = getattr(output_format, "ignore_keys", [])
         
         result = super().evaluate(
             eval_dataset=eval_dataset,

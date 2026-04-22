@@ -1,3 +1,4 @@
+from .fast_preprocessor import FastMelSpectrogramPreprocessor as FastMelSpectrogramPreprocessor
 from .spectogram_preprocessors import MelSpectrogramPreprocessors as MelSpectrogramPreprocessors
 from .spectogram_preprocessors import MelSpectrogramPreprocessorsNew as MelSpectrogramPreprocessorsNew
 from .preprocessors import PreProcessorBase as PreProcessorBase

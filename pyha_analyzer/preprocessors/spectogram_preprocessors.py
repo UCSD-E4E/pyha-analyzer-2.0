@@ -30,9 +30,10 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
 
         # Below parameter defaults from https://arxiv.org/pdf/2403.10380 pg 25
         self.n_fft=n_fft
-        self.hop_length=hop_length 
+        self.hop_length=hop_length
         self.power=power
         self.n_mels=n_mels
+        self.to_pil = transforms.ToPILImage()
 
         super().__init__(name="MelSpectrogramPreprocessor")
 
@@ -42,7 +43,7 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
         for item_idx in range(len(batch["audio"])):
             label = batch["labels"][item_idx]
             y, sr = librosa.load(path=batch["audio"][item_idx]["path"])
-            
+
             # Select a random 5 second window if not given a 5 second window
             # Padd if less than 5 seconds
             start = 0
@@ -56,10 +57,9 @@ class MelSpectrogramPreprocessors(PreProcessorBase):
                y, label = self.augment(y, sr, label)
 
 
-            pillow_transforms = transforms.ToPILImage()
             
             mels = np.array(
-                pillow_transforms(
+                self.to_pil(
                     librosa.feature.melspectrogram(
                         y=y[start : start + (sr * self.duration)], sr=sr,
                         n_fft=self.n_fft, 
@@ -101,9 +101,10 @@ class MelSpectrogramPreprocessorsNew(PreProcessorBase):
 
         # Below parameter defaults from https://arxiv.org/pdf/2403.10380 pg 25
         self.n_fft=n_fft
-        self.hop_length=hop_length 
+        self.hop_length=hop_length
         self.power=power
         self.n_mels=n_mels
+        self.to_pil = transforms.ToPILImage()
 
         super().__init__(name="MelSpectrogramPreprocessorsNew")
 
@@ -147,8 +148,7 @@ class MelSpectrogramPreprocessorsNew(PreProcessorBase):
                         n_mels=self.n_mels,
                     )
 
-                    pillow_transforms = transforms.ToPILImage()
-                    mel_image = np.array(pillow_transforms(mel), dtype=np.float32)[np.newaxis, ::] / 255.
+                    mel_image = np.array(self.to_pil(mel), dtype=np.float32)[np.newaxis, ::] / 255.
 
                     if self.spectrogram_augments is not None:
                         mel_image = self.spectrogram_augments(mel_image)

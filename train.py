@@ -1,11 +1,20 @@
 """Example code for training a model on birdset.
 
 Make a copy of this file and edit it to train your own model on birdset or your own dataset!
-Make the copy named experiment_*.py 
+Make the copy named experiment_*.py
 """
 
+# Must be set before numpy/torch are imported — these cap the thread pool each
+# dataloader worker spawns for BLAS/FFT ops (librosa.melspectrogram uses numpy FFT).
+# Without this, each of the N workers spawns its own full thread pool, which
+# saturates all CPU cores instead of leaving headroom for the main process.
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments, extractors
-from pyha_analyzer.preprocessors import MelSpectrogramPreprocessors
+from pyha_analyzer.preprocessors import FastMelSpectrogramPreprocessor
 from pyha_analyzer.models import EfficentNet
 
 region = "PER"
@@ -22,13 +31,13 @@ for parameters in experiment_parameters:
     birdset_extactor = extractors.Birdset()
     hsn_ads = birdset_extactor(parameters["region"])
 
-    preprocessor = MelSpectrogramPreprocessors(
+    preprocessor = FastMelSpectrogramPreprocessor(
         duration=5, 
         augment=parameters["augmentation"],
         class_list=hsn_ads["train"].features["labels"].feature.names
     )
 
-    test_preprocessor = MelSpectrogramPreprocessors(
+    test_preprocessor = FastMelSpectrogramPreprocessor(
         duration=5, 
         augment=None,
         class_list=hsn_ads["train"].features["labels"].feature.names

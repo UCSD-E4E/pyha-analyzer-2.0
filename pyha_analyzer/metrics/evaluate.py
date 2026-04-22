@@ -50,12 +50,15 @@ class ComputeMetricsBase(ABC):
     """
 
     def __call__(self, eval_pred) -> dict[str, float]:
-        logits = torch.Tensor(eval_pred.predictions)
-        # [-1] as eval_pred.label_ids are just the model inputs...
-        
-        #SHOULD handle cases of diffrent size outputs
+        predictions = eval_pred.predictions
+        if isinstance(predictions, tuple):
+            # If multiple output keys weren't ignored, take the first (logits)
+            predictions = predictions[0]
+        logits = torch.Tensor(predictions)
+
         label_ids = eval_pred.label_ids
         if isinstance(label_ids, tuple):
+            # label_names = ["audio", "audio_in", "labels"] so labels is last
             target = torch.Tensor(label_ids[-1]).to(torch.long)
         else:
             target = torch.Tensor(label_ids).to(torch.long)

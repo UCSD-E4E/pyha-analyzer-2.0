@@ -212,3 +212,14 @@ wandb/
 data_birdset/
 experiment_*.py
 database
+
+
+# Prevent upload of any model checkpoints
+model_checkpointts
+*.pt
+*.pth
+*.bin
+model.safetensors
+trainer_state.json
+training_args.bin
+config.json

@@ -23,19 +23,26 @@ dependencies = [
 cpu = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio==2.7.0",
 ]
 cu128 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio==2.7.0",
+  "nvidia-nccl-cu12",
 ]
 cu126 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio==2.7.0",
+  "nvidia-nccl-cu12",
 ]
 
 cu130 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
+  "torchaudio>=2.7.0",
+  "nvidia-nccl-cu12",
 ]
 
 wandb = [
@@ -62,6 +69,17 @@ torch = [
 ]
 torchvision = [
   { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu128", extra = "cu128" },
+  { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
+]
+torchaudio = [
+  { index = "pytorch-cpu", extra = "cpu" },
+  { index = "pytorch-cu128", extra = "cu128" },
+  { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
+]
+nvidia-nccl-cu12 = [
   { index = "pytorch-cu128", extra = "cu128" },
   { index = "pytorch-cu126", extra = "cu126" },
   { index = "pytorch-cu130", extra = "cu130" },
