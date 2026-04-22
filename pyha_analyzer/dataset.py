@@ -29,9 +29,3 @@ class AudioDataset(DatasetDict):
         Returns a new ClassLabel Object to make mapping easier between datasets
         """
         return ClassLabel(names=self["train"].features["labels"].names)
-
-
-## TODO: Features to add that maybe useful
-##  Summary Statistics System
-##  Audio Player for demos?
-##  Concatenate System (might be built into DatasetDict)
