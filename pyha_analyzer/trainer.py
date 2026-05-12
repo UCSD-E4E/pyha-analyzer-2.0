@@ -76,6 +76,8 @@ class PyhaTrainer(Trainer):
 
         self.dataset = dataset
 
+        num_classes = self.dataset.get_number_species()
+
         ## DEFINES METRICS FOR DETERMINING HOW GOOD MODEL IS
         if metrics is not None and isinstance(metrics, ComputeMetricsBase):
             compute_metrics = metrics
@@ -83,7 +85,7 @@ class PyhaTrainer(Trainer):
             compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
 
         # Will create default metrics such as cMAP and AUROC
-        num_classes = self.dataset.get_number_species()
+        # num_classes = self.dataset.get_number_species()
         #print("num_classes is ", num_classes)
 
         
