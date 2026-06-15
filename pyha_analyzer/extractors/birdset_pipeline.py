@@ -11,7 +11,7 @@ from datasets import load_dataset, Audio, DatasetDict, ClassLabel, Sequence
 from pyha_analyzer import AudioDataset
 from pyha_analyzer.preprocessors.birdset_event_mapper import XCEventMapping
 from pyha_analyzer.preprocessors.birdset_utils import smart_sampling, classes_one_hot
-from pyha_analyzer.preprocessors.event_decoding import EventDecoding
+from pyha_analyzer.preprocessors.birdset_event_decoding import EventDecoding
 from pyha_analyzer.preprocessors.birdset_spectrogram_preprocessors import (
     BirdSetMelSpectrogramPreprocessor,
 )

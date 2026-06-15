@@ -16,7 +16,7 @@ from pyha_analyzer.extractors.birdset_pipeline import BirdSetDataPipeline
 from pyha_analyzer.metrics.classification_metrics import AudioClassificationMetrics
 from pyha_analyzer.models import EfficentNet
 from pyha_analyzer.training_configs import DataConfig, TrainingConfig
-from pyha_analyzer.preprocessors.event_decoding import EventDecoding
+from pyha_analyzer.preprocessors.birdset_event_decoding import EventDecoding
 from pyha_analyzer.preprocessors.augmentations import ComposeAudioLabel, MixItUp
 from audiomentations import AddBackgroundNoise, Gain, PolarityInversion
 import argparse, os
