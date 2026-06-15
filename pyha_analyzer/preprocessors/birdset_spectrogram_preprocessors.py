@@ -12,7 +12,7 @@ while matching the main BirdSet spectrogram preprocessing choices:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Optional, Literal
 
 import librosa
 import numpy as np
@@ -64,6 +64,7 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
         self.config = config or BirdSetSpectrogramConfig()
         self.augment = augment
         self.spectrogram_augments = spectrogram_augments
+        self.chunking = chunking
         super().__init__(name="BirdSetSpectrogramPreprocessor")
 
     def __call__(self, batch):
@@ -72,10 +73,12 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
 
         for item_idx in range(len(batch["audio"])):
             label = batch["labels"][item_idx]
-            audio = self._load_audio(batch["audio"][item_idx])
+            audio = batch["audio"][item_idx]
+            if (self.chunking == "random"):
+                audio = self._load_audio(audio)
+                
             audio = self._fixed_length_audio(audio)
             audio = self._normalize_waveform(audio)
-
             if self.augment is not None:
                 audio, label = self.augment(audio, self.config.sample_rate, label)
 

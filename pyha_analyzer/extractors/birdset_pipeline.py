@@ -10,11 +10,10 @@ from datasets import load_dataset, Audio, DatasetDict, ClassLabel, Sequence
 
 from pyha_analyzer import AudioDataset
 from pyha_analyzer.preprocessors.birdset_event_mapper import XCEventMapping
-from pyha_analyzer.preprocessors.smart_sampling import smart_sampling
-from pyha_analyzer.preprocessors.birdset_one_hot import classes_one_hot
+from pyha_analyzer.preprocessors.birdset_utils import smart_sampling, classes_one_hot
 from pyha_analyzer.preprocessors.event_decoding import EventDecoding
-from pyha_analyzer.preprocessors.birdset_spectrogram_preprocessors_chunking import (
-    BirdSetSpectrogramPreprocessorWithChunking,
+from pyha_analyzer.preprocessors.birdset_spectrogram_preprocessors import (
+    BirdSetMelSpectrogramPreprocessor,
 )
 
 from pyha_analyzer.preprocessors.augmentations import ComposeAudioLabel, MixItUp
@@ -37,13 +36,18 @@ class BirdSetDataPipeline:
     All steps can be executed via `process_full()` or individually.
     """
     
-    def __init__(self, data_config: DataConfig):
+    def __init__(
+        self, 
+        data_config: DataConfig
+    ):
         self.config = data_config
         self.raw_dataset = None
         self.processed_dataset = None
         self.audio_dataset = None
     
-    def load_raw(self) -> DatasetDict:
+    def load_raw(
+        self
+    ) -> DatasetDict:
         """Load raw BirdSet dataset for the specified region."""
         print(f">> Loading BirdSet dataset for region: {self.config.region}")
         self.raw_dataset = load_dataset(
@@ -53,7 +57,9 @@ class BirdSetDataPipeline:
         )
         return self.raw_dataset
     
-    def add_columns(self) -> DatasetDict:
+    def add_columns(
+        self
+    ) -> DatasetDict:
         """Add audio_in and labels columns."""
         print(">> Adding audio_in and labels columns.")
         for split in ["train", "test_5s"]:
@@ -65,7 +71,9 @@ class BirdSetDataPipeline:
             )
         return self.raw_dataset
     
-    def cast_audio(self) -> DatasetDict:
+    def cast_audio(
+        self
+    ) -> DatasetDict:
         """Cast audio to proper format with sampling rate and mono conversion."""
         print(f">> Casting audio to {self.config.sampling_rate}Hz mono.")
         self.raw_dataset = self.raw_dataset.cast_column(
@@ -78,7 +86,9 @@ class BirdSetDataPipeline:
         )
         return self.raw_dataset
     
-    def extract_splits(self) -> DatasetDict:
+    def extract_splits(
+        self
+    ) -> DatasetDict:
         """Extract only train and test_5s splits."""
         print(">> Extracting train and test_5s splits.")
         self.raw_dataset = DatasetDict(
@@ -86,7 +96,9 @@ class BirdSetDataPipeline:
         )
         return self.raw_dataset
     
-    def event_mapping(self) -> DatasetDict:
+    def event_mapping(
+        self
+    ) -> DatasetDict:
         """Apply event mapping transformation."""
         print(">> Applying event mapping (train split).")
         event_mapper = XCEventMapping()
@@ -99,7 +111,9 @@ class BirdSetDataPipeline:
         )
         return self.raw_dataset
     
-    def smart_sample(self) -> DatasetDict:
+    def smart_sample(
+        self
+    ) -> DatasetDict:
         """Apply smart sampling to balance class and event distribution."""
         print(
             f">> Smart sampling (class_limit={self.config.class_limit}, "
@@ -113,7 +127,9 @@ class BirdSetDataPipeline:
         )
         return self.raw_dataset
     
-    def one_hot_encode(self) -> DatasetDict:
+    def one_hot_encode(
+        self
+    ) -> DatasetDict:
         """Convert labels to one-hot encoding."""
         print(">> One-hot encoding labels.")
         num_classes = len(self.raw_dataset["train"].features["ebird_code"].names)
@@ -132,7 +148,9 @@ class BirdSetDataPipeline:
         
         return self.raw_dataset
     
-    def train_test_split(self) -> DatasetDict:
+    def train_test_split(
+        self
+    ) -> DatasetDict:
         """Split training data into train and validation sets."""
         print(
             f">> Splitting train into train/valid "
@@ -146,7 +164,9 @@ class BirdSetDataPipeline:
         self.raw_dataset["valid"] = xc_ds["test"]
         return self.raw_dataset
     
-    def create_audio_dataset(self) -> AudioDataset:
+    def create_audio_dataset(
+        self
+    ) -> AudioDataset:
         """Wrap processed dataset in AudioDataset for PyHa compatibility."""
         print(">> Creating AudioDataset.")
         self.audio_dataset = AudioDataset(
@@ -205,8 +225,8 @@ class BirdSetDataPipeline:
                 return augmented_audio, label
         augmenter = AugmentedTransform(augmentations)
         # augmenter = None
-        train_preprocessor = BirdSetSpectrogramPreprocessorWithChunking(augment=augmenter)
-        test_preprocessor = BirdSetSpectrogramPreprocessorWithChunking()
+        train_preprocessor = BirdSetMelSpectrogramPreprocessor(augment=augmenter)
+        test_preprocessor = BirdSetMelSpectrogramPreprocessor()
         self.audio_dataset["train"].set_transform(train_preprocessor)
         self.audio_dataset["valid"].set_transform(test_preprocessor)
         self.audio_dataset["test"].set_transform(test_preprocessor)

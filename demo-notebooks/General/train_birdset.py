@@ -7,7 +7,8 @@ This script orchestrates the modular data pipeline and training process.
 Separates concerns: configuration, data loading, and training.
 
 Usage:
-    python train_birdset.py
+    python train_birdset.py 
+
 """
 
 from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments
@@ -18,16 +19,19 @@ from pyha_analyzer.training_configs import DataConfig, TrainingConfig
 from pyha_analyzer.preprocessors.event_decoding import EventDecoding
 from pyha_analyzer.preprocessors.augmentations import ComposeAudioLabel, MixItUp
 from audiomentations import AddBackgroundNoise, Gain, PolarityInversion
-import os
+import argparse, os
 from safetensors.torch import load_file
 
 import warnings
 warnings.filterwarnings("ignore") #AUDIOMENTIONS REALLY NEEDS TO QUIET RESAMPLING WARNINGS
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--save", action="store_true", help="Save the output")
 
 
-
-def main():
+def main(
+    save: bool
+):
     """Main training pipeline orchestration."""
     
     # Configuration
@@ -91,15 +95,13 @@ def main():
         metrics=compute_metrics,
         training_args=training_args,
     )
-    # print('here')
     trainer.train()
-    # print('done')
     
-    # Save model
-    # save_dir = f"/home/s.dalal.334/models/{training_config.num_train_epochs}-{data_config.region}-no-aug"
-    # os.makedirs(save_dir, exist_ok=True)
-    # trainer.save_model(save_dir)
-    # print(f"Model saved to {save_dir}")
+    if (save):
+        save_dir = f"/home/s.dalal.334/models/{training_config.num_train_epochs}-{data_config.region}-no-aug"
+        os.makedirs(save_dir, exist_ok=True)
+        trainer.save_model(save_dir)
+        print(f"Model saved to {save_dir}")
     
     # Evaluation
     results = trainer.evaluate(eval_dataset=audio_dataset["test"], metric_key_prefix="Soundscape")
@@ -110,4 +112,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parser.parse_args()
+
+    if args.save:
+        print("Saving model")
+    else:
+        print("not saving model")
+
+    main(args.save)
