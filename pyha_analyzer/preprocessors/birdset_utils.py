@@ -35,7 +35,9 @@ def smart_sampling(
         desc="sampling: unique-identifier",
         load_from_cache_file=False
     )
-    df = pd.DataFrame(dataset)
+    # Only load necessary columns into pandas to avoid loading large audio/spectrogram data
+    df = pd.DataFrame(dataset.select_columns(["id", label_name]))
+    print(df)
     path_label_count = df.groupby(["id", label_name], as_index=False).size()
     path_label_count = path_label_count.set_index("id")
     class_sizes = df.groupby(label_name).size()
@@ -99,7 +101,7 @@ def classes_one_hot(
     Returns:
         dict: The batch with the "labels" field converted to one-hot encoding. The keys are the field names and the values are the field data.
     """
-    label_list = [y for y in batch["ebird_code_multilabel"]]
+    label_list = [y for y in batch["labels"]]
     class_one_hot_matrix = torch.zeros(
         (len(label_list), num_classes), dtype=torch.float
     )
@@ -108,4 +110,4 @@ def classes_one_hot(
         class_one_hot_matrix[class_idx, idx] = 1
 
     class_one_hot_matrix = torch.tensor(class_one_hot_matrix, dtype=torch.float32)
-    return {"ebird_code_multilabel": class_one_hot_matrix}
+    return {"labels": class_one_hot_matrix}
