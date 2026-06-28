@@ -18,7 +18,7 @@ from pyha_analyzer.preprocessors.birdset_spectrogram_preprocessors import (
 
 from pyha_analyzer.preprocessors.augmentations import ComposeAudioLabel, MixItUp
 from audiomentations import AddBackgroundNoise, Gain, PolarityInversion
-from pyha_analyzer.training_configs import DataConfig
+from pyha_analyzer.training_configs import DataConfig, AugmentationConfig
 
 
 class BirdSetDataPipeline:
@@ -37,13 +37,16 @@ class BirdSetDataPipeline:
     """
     
     def __init__(
-        self, 
-        data_config: DataConfig
+        self,
+        data_config: DataConfig,
+        augmentation_config: AugmentationConfig = None,
     ):
         self.config = data_config
+        self.augmentation_config = augmentation_config or AugmentationConfig()
         self.raw_dataset = None
         self.processed_dataset = None
         self.audio_dataset = None
+        self.chunking = getattr(data_config, "chunking", "random")
     
     def load_raw(
         self
@@ -136,16 +139,16 @@ class BirdSetDataPipeline:
         class_list = self.raw_dataset["train"].features["ebird_code"].names
         multilabel = Sequence(ClassLabel(names=class_list))
         
+        self.raw_dataset["train"] = self.raw_dataset["train"].cast_column("labels", multilabel)
         for split in ["train", "test_5s"]:
             self.raw_dataset[split] = self.raw_dataset[split].map(
                 classes_one_hot,
                 batched=True,
                 batch_size=self.config.batch_size,
-                load_from_cache_file=True,
+                load_from_cache_file=False,
                 desc=f"One-hot-encoding {split} labels.",
                 fn_kwargs={"num_classes": num_classes},
-            ).cast_column("labels", multilabel)
-        
+            )
         return self.raw_dataset
     
     def train_test_split(
@@ -193,45 +196,84 @@ class BirdSetDataPipeline:
         self.audio_dataset["valid"].set_transform(event_decoder)
         
         print(">> Applying spectrogram preprocessing transform.")
-        augmentations = ComposeAudioLabel([
-            AddBackgroundNoise(
-                sounds_path="data_birdset/background_noise",
-                min_snr_db=3.0,
-                max_snr_db=30.0,
-                p=0.5
-            ),
-            Gain(
-                min_gain_db = -18.0,
-                max_gain_db = 6.0,
-                p = 0.2
-            ),
-            MixItUp(
-                dataset_ref=self.audio_dataset["train"],
-                min_snr_db=3.0,
-                max_snr_db=30.0,
-                p=0.7
-            )
-
-        ])
+        augmentations = self._build_augmentations()
     
         class AugmentedTransform:
             def __init__(self, augmentations):
                 self.augmentations = augmentations
             
             def __call__(self, audio, sample_rate, label):
-
-                augmented_audio, label = self.augmentations(audio, sample_rate, label)
-                    
+                if self.augmentations:
+                    augmented_audio, label = self.augmentations(audio, sample_rate, label)
+                else:
+                    augmented_audio = audio
                 return augmented_audio, label
-        augmenter = AugmentedTransform(augmentations)
-        # augmenter = None
-        train_preprocessor = BirdSetMelSpectrogramPreprocessor(augment=augmenter)
+        
+        augmenter = AugmentedTransform(augmentations) if augmentations else None
+        train_preprocessor = BirdSetMelSpectrogramPreprocessor(augment=augmenter, chunking=self.chunking)
         test_preprocessor = BirdSetMelSpectrogramPreprocessor()
         self.audio_dataset["train"].set_transform(train_preprocessor)
         self.audio_dataset["valid"].set_transform(test_preprocessor)
         self.audio_dataset["test"].set_transform(test_preprocessor)
         
         return self.audio_dataset
+    
+    def _build_augmentations(self) -> ComposeAudioLabel:
+        """Build augmentation pipeline based on AugmentationConfig."""
+        augmentation_list = []
+        aug_config = self.augmentation_config
+        
+        # Add Background Noise augmentation
+        if aug_config.enable_background_noise:
+            if aug_config.background_noise_path is None:
+                raise ValueError(
+                    "background_noise_path must be set when enable_background_noise=True"
+                )
+            print(f"   - Adding BackgroundNoise augmentation from {aug_config.background_noise_path}")
+            augmentation_list.append(
+                AddBackgroundNoise(
+                    sounds_path=aug_config.background_noise_path,
+                    min_snr_db=aug_config.background_noise_min_snr_db,
+                    max_snr_db=aug_config.background_noise_max_snr_db,
+                    p=aug_config.background_noise_p,
+                )
+            )
+        
+        # Add Gain augmentation
+        if aug_config.enable_gain:
+            print("   - Adding Gain augmentation")
+            augmentation_list.append(
+                Gain(
+                    min_gain_db=aug_config.gain_min_gain_db,
+                    max_gain_db=aug_config.gain_max_gain_db,
+                    p=aug_config.gain_p,
+                )
+            )
+        
+        # Add MixItUp augmentation
+        if aug_config.enable_mixitup:
+            print("   - Adding MixItUp augmentation")
+            augmentation_list.append(
+                MixItUp(
+                    dataset_ref=self.audio_dataset["train"],
+                    min_snr_db=aug_config.mixitup_min_snr_db,
+                    max_snr_db=aug_config.mixitup_max_snr_db,
+                    p=aug_config.mixitup_p,
+                )
+            )
+        
+        # Add Polarity Inversion augmentation
+        if aug_config.enable_polarity_inversion:
+            print("   - Adding PolarityInversion augmentation")
+            augmentation_list.append(
+                PolarityInversion(p=aug_config.polarity_inversion_p)
+            )
+        
+        if augmentation_list:
+            return ComposeAudioLabel(augmentation_list)
+        else:
+            print("   - No augmentations enabled")
+            return None
     
     def process_full(self) -> AudioDataset:
         """Execute the complete data pipeline."""
@@ -243,8 +285,9 @@ class BirdSetDataPipeline:
         self.add_columns()
         self.cast_audio()
         self.extract_splits()
-        self.event_mapping()
-        self.smart_sample()
+        if self.chunking == "detected_event_chunking":
+            self.event_mapping()
+            self.smart_sample()
         self.one_hot_encode()
         self.train_test_split()
         self.create_audio_dataset()

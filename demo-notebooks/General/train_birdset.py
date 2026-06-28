@@ -15,12 +15,11 @@ from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments
 from pyha_analyzer.extractors.birdset_pipeline import BirdSetDataPipeline
 from pyha_analyzer.metrics.classification_metrics import AudioClassificationMetrics
 from pyha_analyzer.models import EfficentNet
-from pyha_analyzer.training_configs import DataConfig, TrainingConfig
-from pyha_analyzer.preprocessors.birdset_event_decoding import EventDecoding
-from pyha_analyzer.preprocessors.augmentations import ComposeAudioLabel, MixItUp
-from audiomentations import AddBackgroundNoise, Gain, PolarityInversion
+from pyha_analyzer.training_configs import DataConfig, TrainingConfig, AugmentationConfig
 import argparse, os
 from safetensors.torch import load_file
+
+import torch
 
 import warnings
 warnings.filterwarnings("ignore") #AUDIOMENTIONS REALLY NEEDS TO QUIET RESAMPLING WARNINGS
@@ -28,6 +27,12 @@ warnings.filterwarnings("ignore") #AUDIOMENTIONS REALLY NEEDS TO QUIET RESAMPLIN
 parser = argparse.ArgumentParser()
 parser.add_argument("--save", action="store_true", help="Save the output")
 
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
+print(f"Using device = {device}")
 
 def main(
     save: bool
@@ -42,6 +47,24 @@ def main(
         event_limit=5,
         max_event_length=5.0,
         batch_size=300,
+        chunking="detected_event_chunking"
+    )
+    
+    # Augmentation configuration
+    aug_config = AugmentationConfig(
+        background_noise_path="/home/s.dalal.800/pyha-analyzer-2.0/data_birdset/background_noise",
+        enable_background_noise=False,
+        background_noise_min_snr_db=3.0,
+        background_noise_max_snr_db=30.0,
+        background_noise_p=0.5,
+        enable_gain=False,
+        gain_min_gain_db=-18.0,
+        gain_max_gain_db=6.0,
+        gain_p=0.2,
+        enable_mixitup=False,
+        mixitup_min_snr_db=3.0,
+        mixitup_max_snr_db=30.0,
+        mixitup_p=0.7,
     )
     
     training_config = TrainingConfig(
@@ -53,13 +76,14 @@ def main(
     )
     
     # Data loading
-    data_pipeline = BirdSetDataPipeline(data_config)
+    data_pipeline = BirdSetDataPipeline(data_config, aug_config)
     audio_dataset = data_pipeline.process_full()
     
     # Training
     num_classes = audio_dataset.get_number_species()
-    model = EfficentNet(num_classes=num_classes)
-    # state_dict = load_file('/home/s.dalal.334/models/checkpoint-6750/model.safetensors')
+    print(num_classes)
+    model = EfficentNet(num_classes=num_classes).to(device)
+    # state_dict = load_file('/home/s.dalal.800/models/checkpoint-6750/model.safetensors')
     # model.load_state_dict(state_dict)
     # model.eval()
 
@@ -70,7 +94,7 @@ def main(
         project_name=training_config.project_name,
     )
 
-    training_args.num_train_epochs = 30
+    training_args.num_train_epochs = 1
     training_args.eval_steps = training_config.eval_steps
     training_args.per_device_train_batch_size = (
         training_config.per_device_train_batch_size
@@ -84,10 +108,12 @@ def main(
     training_args.learning_rate = training_config.learning_rate
     training_args.save_steps = 0.5
     training_args.save_strategy = "steps"
-    training_args.output_dir = "/home/s.dalal.334/models/HSN_BirdSet/with_aug"
+    training_args.output_dir = "/home/s.dalal.800/models/HSN_BirdSet/with_aug"
 
 
     compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
+
+    audio_dataset["train"] = audio_dataset["train"].select(range(100))
 
     trainer = PyhaTrainer(
         model=model,
@@ -98,7 +124,7 @@ def main(
     trainer.train()
     
     if (save):
-        save_dir = f"/home/s.dalal.334/models/{training_config.num_train_epochs}-{data_config.region}-no-aug"
+        save_dir = f"/home/s.dalal.800/models/{training_config.num_train_epochs}-{data_config.region}-no-aug"
         os.makedirs(save_dir, exist_ok=True)
         trainer.save_model(save_dir)
         print(f"Model saved to {save_dir}")

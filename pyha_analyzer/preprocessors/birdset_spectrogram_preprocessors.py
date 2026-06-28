@@ -60,6 +60,7 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
         config: BirdSetSpectrogramConfig | None = None,
         augment: Optional[Callable] = None,
         spectrogram_augments: Optional[Callable] = None,
+        chunking: ["random", "detected_event_chunking"] = "random"
     ):
         self.config = config or BirdSetSpectrogramConfig()
         self.augment = augment
@@ -74,11 +75,15 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
         for item_idx in range(len(batch["audio"])):
             label = batch["labels"][item_idx]
             audio = batch["audio"][item_idx]
-            if (self.chunking == "random"):
+            if (self.chunking == "detected_event_chunking"):
+                audio = audio["array"]
+            else:
                 audio = self._load_audio(audio)
-                
-            audio = self._fixed_length_audio(audio)
+    
             audio = self._normalize_waveform(audio)
+            audio = self._fixed_length_audio(audio)
+
+                
             if self.augment is not None:
                 audio, label = self.augment(audio, self.config.sample_rate, label)
 
