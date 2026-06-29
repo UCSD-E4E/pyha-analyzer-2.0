@@ -69,9 +69,9 @@ def main(
     
     training_config = TrainingConfig(
         working_dir="working_dir",
-        run_name="30-train-birdset-chunking-preprocessor-with-aug",
+        run_name="30-train-birdset-chunking-preprocessor-no-aug",
         project_name="egci_bioacoustic_shifts",
-        num_train_epochs=1,
+        num_train_epochs=30,
         eval_steps=1000,
     )
     
@@ -94,7 +94,7 @@ def main(
         project_name=training_config.project_name,
     )
 
-    training_args.num_train_epochs = 1
+    training_args.num_train_epochs = training_config.num_train_epochs
     training_args.eval_steps = training_config.eval_steps
     training_args.per_device_train_batch_size = (
         training_config.per_device_train_batch_size
@@ -113,7 +113,6 @@ def main(
 
     compute_metrics = AudioClassificationMetrics([], num_classes=num_classes)
 
-    audio_dataset["train"] = audio_dataset["train"].select(range(100))
 
     trainer = PyhaTrainer(
         model=model,
