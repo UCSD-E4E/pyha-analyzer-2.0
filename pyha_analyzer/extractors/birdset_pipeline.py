@@ -69,9 +69,10 @@ class BirdSetDataPipeline:
             self.raw_dataset[split] = self.raw_dataset[split].add_column(
                 "audio_in", self.raw_dataset[split]["audio"]
             )
-            self.raw_dataset[split] = self.raw_dataset[split].add_column(
-                "labels", copy(self.raw_dataset[split]["ebird_code_multilabel"])
-            )
+            # self.raw_dataset[split] = self.raw_dataset[split].add_column(
+            #     "labels", copy(self.raw_dataset[split]["ebird_code_multilabel"])
+            # )
+            self.raw_dataset[split] = self.raw_dataset[split].rename_column("ebird_code_multilabel", "labels")
         return self.raw_dataset
     
     def cast_audio(
@@ -139,7 +140,7 @@ class BirdSetDataPipeline:
         class_list = self.raw_dataset["train"].features["ebird_code"].names
         multilabel = Sequence(ClassLabel(names=class_list))
         
-        self.raw_dataset["train"] = self.raw_dataset["train"].cast_column("labels", multilabel)
+        # self.raw_dataset["train"] = self.raw_dataset["train"].cast_column("labels", multilabel)
         for split in ["train", "test_5s"]:
             self.raw_dataset[split] = self.raw_dataset[split].map(
                 classes_one_hot,
@@ -148,7 +149,7 @@ class BirdSetDataPipeline:
                 load_from_cache_file=False,
                 desc=f"One-hot-encoding {split} labels.",
                 fn_kwargs={"num_classes": num_classes},
-            )
+            ).cast_column("labels", multilabel)
         return self.raw_dataset
     
     def train_test_split(
@@ -192,30 +193,46 @@ class BirdSetDataPipeline:
             max_len=self.config.max_event_length,
             sample_rate=self.config.sampling_rate,
         )
-        self.audio_dataset["train"].set_transform(event_decoder)
-        self.audio_dataset["valid"].set_transform(event_decoder)
-        
+
         print(">> Applying spectrogram preprocessing transform.")
         augmentations = self._build_augmentations()
-    
+
         class AugmentedTransform:
             def __init__(self, augmentations):
                 self.augmentations = augmentations
-            
+
             def __call__(self, audio, sample_rate, label):
                 if self.augmentations:
                     augmented_audio, label = self.augmentations(audio, sample_rate, label)
                 else:
                     augmented_audio = audio
                 return augmented_audio, label
-        
+
+        class ChainedTransform:
+            def __init__(self, *transforms):
+                self.transforms = transforms
+
+            def __call__(self, batch):
+                for transform in self.transforms:
+                    batch = transform(batch)
+                return batch
+
         augmenter = AugmentedTransform(augmentations) if augmentations else None
-        train_preprocessor = BirdSetMelSpectrogramPreprocessor(augment=augmenter, chunking=self.chunking)
+        train_preprocessor = BirdSetMelSpectrogramPreprocessor(
+            augment=augmenter,
+            chunking=self.chunking,
+        )
         test_preprocessor = BirdSetMelSpectrogramPreprocessor()
-        self.audio_dataset["train"].set_transform(train_preprocessor)
-        self.audio_dataset["valid"].set_transform(test_preprocessor)
+
+        train_transform = ChainedTransform(event_decoder, train_preprocessor)
+        eval_transform = ChainedTransform(event_decoder, test_preprocessor)
+
+        self.audio_dataset["train"].set_transform(train_transform)
+        self.audio_dataset["valid"].set_transform(eval_transform)
         self.audio_dataset["test"].set_transform(test_preprocessor)
-        
+
+
+
         return self.audio_dataset
     
     def _build_augmentations(self) -> ComposeAudioLabel:

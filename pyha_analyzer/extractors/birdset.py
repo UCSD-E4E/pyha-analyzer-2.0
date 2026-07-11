@@ -19,7 +19,11 @@ class Birdset(DefaultExtractor):
         super().__init__("Birdset")
 
     def __call__(self, region):
-        ds = load_dataset("DBD-research-group/BirdSet", region, trust_remote_code=True)
+        ds = load_dataset(
+            "DBD-research-group/BirdSet",
+            region,
+            trust_remote_code=True,
+        )
         class_list = ds["train"].features["ebird_code"].names
         multilabel_class_label =  Sequence(ClassLabel(names=class_list))
 
@@ -30,6 +34,7 @@ class Birdset(DefaultExtractor):
                 .add_column("labels", copy(ds[split]["ebird_code_multilabel"]))
                 # .cast_column("labels", multilabel_class_label)
             )
+
 
             ds[split] = ds[split].map(
                 lambda row: one_hot_encode_ds_wrapper(row, class_list)

@@ -59,7 +59,7 @@ class TrainingConfig:
     eval_steps: int = 100
     per_device_train_batch_size: int = 64
     per_device_eval_batch_size: int = 64
-    dataloader_num_workers: int = 4
+    dataloader_num_workers: int = 16
     logging_steps: int = 10
     eval_accumulation_steps: int = 100
     learning_rate: float = 5e-4
