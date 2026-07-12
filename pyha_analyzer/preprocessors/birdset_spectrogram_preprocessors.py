@@ -80,8 +80,8 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
             else:
                 audio = self._load_audio(audio)
     
-            audio = self._normalize_waveform(audio)
             audio = self._fixed_length_audio(audio)
+            audio = self._normalize_waveform(audio)
 
                 
             if self.augment is not None:
