@@ -29,11 +29,13 @@ class Birdset(DefaultExtractor):
 
         for split in ["train", "test_5s"]:
             ds[split] = ds[split].add_column("audio_in", ds[split]["audio"])
-            ds[split] = (
-                ds[split]
-                .add_column("labels", copy(ds[split]["ebird_code_multilabel"]))
-                # .cast_column("labels", multilabel_class_label)
-            )
+            # ds[split] = (
+            #     ds[split]
+            #     .add_column("labels", copy(ds[split]["ebird_code_multilabel"]))
+            #     # .cast_column("labels", multilabel_class_label)
+            # )
+
+            ds[split] = ds[split].rename_column("ebird_code_multilabel", "labels")
 
 
             ds[split] = ds[split].map(

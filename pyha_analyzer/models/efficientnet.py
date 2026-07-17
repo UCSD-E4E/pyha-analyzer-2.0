@@ -6,7 +6,7 @@ from typing import List
 from .base_model import BaseModel, has_required_inputs
 import torch
 
-class EfficentNet(nn.Module, BaseModel): #BaseModel
+class EfficientNet(nn.Module, BaseModel): #BaseModel
     def __init__(
         self,
         num_channels: int = 1,

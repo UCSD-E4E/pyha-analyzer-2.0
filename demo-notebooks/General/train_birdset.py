@@ -14,7 +14,7 @@ Usage:
 from pyha_analyzer import PyhaTrainer, PyhaTrainingArguments
 from pyha_analyzer.extractors.birdset_pipeline import BirdSetDataPipeline
 from pyha_analyzer.metrics.classification_metrics import AudioClassificationMetrics
-from pyha_analyzer.models import EfficentNet
+from pyha_analyzer.models import EfficientNet
 from pyha_analyzer.training_configs import DataConfig, TrainingConfig, AugmentationConfig
 import argparse, os
 from safetensors.torch import load_file
@@ -82,7 +82,7 @@ def main(
     # Training
     num_classes = audio_dataset.get_number_species()
     print(num_classes)
-    model = EfficentNet(num_classes=num_classes).to(device)
+    model = EfficientNet(num_classes=num_classes).to(device)
     # state_dict = load_file('/home/s.dalal.800/models/checkpoint-6750/model.safetensors')
     # model.load_state_dict(state_dict)
     # model.eval()
