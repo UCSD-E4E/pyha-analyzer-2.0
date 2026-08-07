@@ -38,6 +38,8 @@ class BirdSetSpectrogramConfig:
     normalize_spectrogram: bool = True
     mean: float = -4.268
     std: float = 4.569
+    instance_frequency_normalization: bool = False
+    instance_frequency_normalization_eps: float = 1e-6
     normalize_waveform: Optional[str] = None
     random_crop: bool = True
 
@@ -93,7 +95,9 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
 
             spectrogram = self._resize_spectrogram(spectrogram)
 
-            if self.config.normalize_spectrogram:
+            if self.config.instance_frequency_normalization:
+                spectrogram = self._instance_frequency_normalize(spectrogram)
+            elif self.config.normalize_spectrogram:
                 spectrogram = (spectrogram - self.config.mean) / self.config.std
 
             spectrogram = spectrogram[np.newaxis, :, :].astype(np.float32)
@@ -167,6 +171,20 @@ class BirdSetSpectrogramPreprocessor(PreProcessorBase):
             "normalize_waveform must be one of None, 'instance_normalization', "
             "'instance_min_max', or 'instance_peak_normalization'."
         )
+
+    def _instance_frequency_normalize(self, spectrogram: np.ndarray) -> np.ndarray:
+        """Per-frequency-bin z-score normalization computed per instance.
+
+        Each mel/frequency bin (row) is normalized using its own mean and std,
+        computed across the time axis of *this* spectrogram — as opposed to
+        ``normalize_spectrogram``, which subtracts a fixed dataset-wide
+        mean/std. Useful when recording conditions (gain, noise floor, mic)
+        vary enough that a global mean/std doesn't transfer well.
+        """
+        eps = self.config.instance_frequency_normalization_eps
+        mean = spectrogram.mean(axis=-1, keepdims=True)
+        std = spectrogram.std(axis=-1, keepdims=True)
+        return ((spectrogram - mean) / (std + eps)).astype(np.float32, copy=False)
 
     def _mel_power_spectrogram(self, audio: np.ndarray) -> np.ndarray:
         return librosa.feature.melspectrogram(

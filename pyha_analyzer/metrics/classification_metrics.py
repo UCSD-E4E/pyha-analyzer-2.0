@@ -7,7 +7,7 @@ from torchmetrics.classification import (
     MulticlassConfusionMatrix,
     MultilabelConfusionMatrix
 )
-from evaluate import Metric, ComputeMetricsBase
+from .evaluate import Metric, ComputeMetricsBase
 from typing import Dict
 import os
 import torch
